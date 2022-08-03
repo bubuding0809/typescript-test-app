@@ -111,11 +111,13 @@ export default function Main() {
       return (
         <div
           key={todo.id}
-          className="flex justify-between items-center border rounded p-3 shadow mb-1"
+          className={`flex justify-between items-center border rounded p-3 shadow mb-1 ${
+            todo.isChecked && "bg-gray-200"
+          }`}
         >
           <p
             className={`text-start text-ellipsis overflow-hidden ${
-              todo.isChecked && "line-through"
+              todo.isChecked && "line-through text-slate-500"
             }`}
           >
             {todo.message}
