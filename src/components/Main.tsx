@@ -1,16 +1,26 @@
-import React, { FormEventHandler, useState, useRef, useEffect } from "react";
+import React, {
+  FormEventHandler,
+  useState,
+  useRef,
+  useEffect,
+  LegacyRef,
+} from "react";
 import { Todo } from "../utils/types";
 import { getLocalStorage, setLocalStorage } from "../utils/useLocalStorage";
 import autoAnimate from "@formkit/auto-animate";
+import { nanoid } from "nanoid";
 
 export default function Main() {
-  const [todoList, setTodoList] = useState<Todo[]>(
-    getLocalStorage("todoList", [])
+  const [newEntry, setNewEntry] = useState<string>("");
+  const [todoListNew, setTodoListNew] = useState<Todo[]>(
+    getLocalStorage("todoListNew", [])
   );
-  const [formEntry, setFormEntry] = useState<string>("");
-  const parent = useRef(null);
+  const [todoListDone, setTodoListDone] = useState<Todo[]>(
+    getLocalStorage("todoListDone", [])
+  );
 
   // Set up autoAnimation of ul element
+  const parent: LegacyRef<HTMLDivElement> = useRef<HTMLDivElement>(null);
   useEffect(() => {
     parent.current && autoAnimate(parent.current);
   }, [parent]);
@@ -20,93 +30,123 @@ export default function Main() {
     e: React.FormEvent<HTMLFormElement>
   ): void => {
     e.preventDefault();
+    const newTodoMessage = newEntry.trim();
 
-    if (!formEntry.trim()) {
-      alert("Enter a task mate1");
+    if (!newTodoMessage) {
+      alert("Enter a task mate");
       return;
     }
 
-    setTodoList((prevState) => {
-      const latestEntry = prevState.at(0);
+    setTodoListNew(prevState => {
       const newTodoList = [
+        ...prevState,
         {
-          id: latestEntry ? latestEntry.id + 1 : 1,
-          message: formEntry,
+          id: nanoid(),
+          message: newTodoMessage,
           isChecked: false,
         },
-        ...prevState,
       ];
-      setLocalStorage("todoList", newTodoList);
+      setLocalStorage("todoListNew", newTodoList);
       return newTodoList;
     });
-    setFormEntry("");
+    setNewEntry("");
   };
 
-  //handle toggling of todo entry checkbox
-  const handleToggleEntry: React.ChangeEventHandler<HTMLInputElement> = (
+  //handle toggling of todo entry checkbox for unfinished todos
+  const handleToggleEntryNew: React.ChangeEventHandler<HTMLInputElement> = (
     e: React.ChangeEvent<HTMLInputElement>
   ): void => {
     const newTodoList: Todo[] = [];
-    var checkedItem: Todo;
+    let toggledTodo: Todo;
 
-    setTodoList((prevState) => {
-      prevState.forEach((todoItem) => {
-        if (todoItem.id === parseInt(e.target.name)) {
-          checkedItem = {
+    setTodoListNew(prevState => {
+      prevState.forEach(todoItem => {
+        if (todoItem.id === e.target.name) {
+          toggledTodo = {
             ...todoItem,
-            isChecked: !todoItem.isChecked,
+            isChecked: true,
           };
         } else {
           newTodoList.push(todoItem);
         }
       });
+      todoListDone.unshift(toggledTodo);
+      setLocalStorage("todoListDone", todoListDone);
+      setLocalStorage("todoListNew", newTodoList);
+      return newTodoList;
+    });
+  };
 
-      if (checkedItem.isChecked) {
-        newTodoList.push(checkedItem);
-      } else {
-        newTodoList.unshift(checkedItem);
-      }
+  //handle toggling of todo entry checkbox for finished todos
+  const handleToggleEntryDone: React.ChangeEventHandler<HTMLInputElement> = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    const newTodoList: Todo[] = [];
+    let toggledTodo: Todo;
 
-      setLocalStorage("todoList", newTodoList);
+    setTodoListDone(prevState => {
+      prevState.forEach(todoItem => {
+        if (todoItem.id === e.target.name) {
+          toggledTodo = {
+            ...todoItem,
+            isChecked: false,
+          };
+        } else {
+          newTodoList.push(todoItem);
+        }
+      });
+      todoListNew.push(toggledTodo);
+      setLocalStorage("todoListDone", todoListDone);
+      setLocalStorage("todoListNew", newTodoList);
       return newTodoList;
     });
   };
 
   // Map todo items into react components
-  const todos: JSX.Element[] = todoList.map((todo: Todo): JSX.Element => {
-    return (
-      <li key={todo.id} className="flex justify-between items-center">
-        <p
-          className={`text-ellipsis overflow-hidden ${
-            todo.isChecked && "line-through"
-          }`}
+  const renderTodos = (
+    todoList: Todo[],
+    handleToggle: React.ChangeEventHandler<HTMLInputElement>
+  ): JSX.Element[] =>
+    todoList.map((todo: Todo): JSX.Element => {
+      return (
+        <div
+          key={todo.id}
+          className="flex justify-between items-center border rounded p-3 shadow mb-1"
         >
-          {todo.message}
-        </p>
-        <input
-          name={todo.id.toString()}
-          type="checkbox"
-          checked={todo.isChecked}
-          onChange={handleToggleEntry}
-        />
-      </li>
-    );
-  });
+          <p
+            className={`text-start text-ellipsis overflow-hidden ${
+              todo.isChecked && "line-through"
+            }`}
+          >
+            {todo.message}
+          </p>
+          <input
+            name={todo.id}
+            type="checkbox"
+            checked={todo.isChecked}
+            onChange={handleToggle}
+          />
+        </div>
+      );
+    });
 
   return (
-    <div className="grid gap-5 grid-cols-1 px-96 pt-5">
-      <form onSubmit={handleNewEntry}>
-        <input
-          type="text"
-          className="w-full h-10 p-2 font-mono text-lg font-semibold border-solid border-2 rounded-lg focus:rounded-lg hover:border-black"
-          value={formEntry}
-          onChange={(e) => setFormEntry(e.target.value)}
-          autoFocus
-        />
-      </form>
-      <ul ref={parent} className="w-auto">
-        {todos}
-      </ul>
+    <div className="flex justify-center">
+      <div className="grid gap-5 grid-cols-1 pt-5 px-4 w-96">
+        <form onSubmit={handleNewEntry}>
+          <input
+            type="text"
+            className="w-full h-10 p-2 font-mono text-lg font-semibold border-solid border-2 rounded-lg focus:rounded-lg hover:border-black"
+            value={newEntry}
+            onChange={e => setNewEntry(e.target.value)}
+            autoFocus
+          />
+        </form>
+        <div ref={parent} className="w-auto">
+          {renderTodos(todoListNew, handleToggleEntryNew)}
+          {renderTodos(todoListDone, handleToggleEntryDone)}
+        </div>
+      </div>
     </div>
   );
 }
