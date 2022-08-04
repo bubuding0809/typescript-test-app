@@ -4,14 +4,21 @@ import React, {
   useRef,
   useEffect,
   LegacyRef,
+  RefObject,
 } from "react";
+import { AntSwitch } from "./customSwitches";
+import { TodoItem } from "./TodoItem";
 import { Todo } from "../utils/types";
 import { getLocalStorage, setLocalStorage } from "../utils/useLocalStorage";
 import autoAnimate from "@formkit/auto-animate";
 import { nanoid } from "nanoid";
+import { Paper } from "@mui/material";
 
 export default function Main() {
   const [newEntry, setNewEntry] = useState<string>("");
+  const [isReveal, setIsReveal] = useState<boolean>(
+    getLocalStorage("isReveal", false)
+  );
   const [todoListNew, setTodoListNew] = useState<Todo[]>(
     getLocalStorage("todoListNew", [])
   );
@@ -20,10 +27,14 @@ export default function Main() {
   );
 
   // Set up autoAnimation of ul element
-  const parent: LegacyRef<HTMLDivElement> = useRef<HTMLDivElement>(null);
+  const parent1: LegacyRef<HTMLDivElement> = useRef<HTMLDivElement>(null);
+  const parent2: LegacyRef<HTMLDivElement> = useRef<HTMLDivElement>(null);
+  const parent3: LegacyRef<HTMLDivElement> = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    parent.current && autoAnimate(parent.current);
-  }, [parent]);
+    parent1.current && autoAnimate(parent1.current);
+    parent2.current && autoAnimate(parent2.current);
+    parent3.current && autoAnimate(parent3.current);
+  }, [parent1, parent2, parent3]);
 
   //handle new todo entry
   const handleNewEntry: FormEventHandler<HTMLFormElement> = (
@@ -37,7 +48,7 @@ export default function Main() {
       return;
     }
 
-    setTodoListNew(prevState => {
+    setTodoListNew((prevState) => {
       const newTodoList = [
         ...prevState,
         {
@@ -59,8 +70,8 @@ export default function Main() {
     const newTodoList: Todo[] = [];
     let toggledTodo: Todo;
 
-    setTodoListNew(prevState => {
-      prevState.forEach(todoItem => {
+    setTodoListNew((prevState) => {
+      prevState.forEach((todoItem) => {
         if (todoItem.id === e.target.name) {
           toggledTodo = {
             ...todoItem,
@@ -70,9 +81,9 @@ export default function Main() {
           newTodoList.push(todoItem);
         }
       });
-      todoListDone.unshift(toggledTodo);
-      setLocalStorage("todoListDone", todoListDone);
+      setLocalStorage("todoListDone", [toggledTodo, ...todoListDone]);
       setLocalStorage("todoListNew", newTodoList);
+      setTodoListDone((prevState) => [toggledTodo, ...prevState]);
       return newTodoList;
     });
   };
@@ -84,8 +95,8 @@ export default function Main() {
     const newTodoList: Todo[] = [];
     let toggledTodo: Todo;
 
-    setTodoListDone(prevState => {
-      prevState.forEach(todoItem => {
+    setTodoListDone((prevState) => {
+      prevState.forEach((todoItem) => {
         if (todoItem.id === e.target.name) {
           toggledTodo = {
             ...todoItem,
@@ -95,60 +106,120 @@ export default function Main() {
           newTodoList.push(todoItem);
         }
       });
-      todoListNew.push(toggledTodo);
-      setLocalStorage("todoListDone", todoListDone);
-      setLocalStorage("todoListNew", newTodoList);
+      setLocalStorage("todoListNew", [...todoListNew, toggledTodo]);
+      setLocalStorage("todoListDone", newTodoList);
+      setTodoListNew((prevState) => [...prevState, toggledTodo]);
       return newTodoList;
     });
   };
 
+  const handleDeleteNew = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    buttonRef: RefObject<HTMLButtonElement>
+  ): void => {
+    const name = buttonRef.current?.name;
+    const newTodoList: Todo[] = [];
+
+    setTodoListNew((prevState) => {
+      prevState.forEach((todoItem) => {
+        if (name === todoItem.id) {
+          return;
+        }
+        newTodoList.push(todoItem);
+      });
+      return newTodoList;
+    });
+    setLocalStorage("todoListNew", newTodoList);
+  };
+
+  const handleDeleteDone = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    buttonRef: RefObject<HTMLButtonElement>
+  ): void => {
+    const name = buttonRef.current?.name;
+    const newTodoList: Todo[] = [];
+
+    setTodoListDone((prevState) => {
+      prevState.forEach((todoItem) => {
+        if (name === todoItem.id) {
+          return;
+        }
+        newTodoList.push(todoItem);
+      });
+      return newTodoList;
+    });
+    setLocalStorage("todoListDone", newTodoList);
+  };
+
+  const handleReveal: React.ChangeEventHandler<HTMLInputElement> = () => {
+    setIsReveal((prevState) => {
+      setLocalStorage("isReveal", !prevState);
+      return !prevState;
+    });
+  };
+
   // Map todo items into react components
-  const renderTodos = (
+  const renderTodoList = (
     todoList: Todo[],
-    handleToggle: React.ChangeEventHandler<HTMLInputElement>
+    handleToggle: React.ChangeEventHandler<HTMLInputElement>,
+    handleDelete: any
   ): JSX.Element[] =>
     todoList.map((todo: Todo): JSX.Element => {
       return (
-        <div
+        <TodoItem
           key={todo.id}
-          className={`flex justify-between items-center border rounded p-3 shadow mb-1 ${
-            todo.isChecked && "bg-gray-200"
-          }`}
-        >
-          <p
-            className={`text-start text-ellipsis overflow-hidden ${
-              todo.isChecked && "line-through text-slate-500"
-            }`}
-          >
-            {todo.message}
-          </p>
-          <input
-            name={todo.id}
-            type="checkbox"
-            checked={todo.isChecked}
-            onChange={handleToggle}
-          />
-        </div>
+          todo={todo}
+          handleToggle={handleToggle}
+          handleDelete={handleDelete}
+        />
       );
     });
 
   return (
-    <div className="flex justify-center">
-      <div className="grid gap-5 grid-cols-1 pt-5 px-4 w-96">
-        <form onSubmit={handleNewEntry}>
+    <div className="flex justify-center py-5 px-2">
+      {/* Task main */}
+      <Paper className="grid gap-2 grid-cols-1 w-96" elevation={3}>
+        {/* Task Entry form */}
+        <form onSubmit={handleNewEntry} className="p-2">
           <input
             type="text"
             className="w-full h-10 p-2 font-mono text-lg font-semibold border-solid border-2 rounded-lg focus:rounded-lg hover:border-black"
             value={newEntry}
-            onChange={e => setNewEntry(e.target.value)}
+            onChange={(e) => setNewEntry(e.target.value)}
             autoFocus
           />
         </form>
-        <div ref={parent} className="w-auto">
-          {renderTodos(todoListNew, handleToggleEntryNew)}
-          {renderTodos(todoListDone, handleToggleEntryDone)}
+
+        {/* Task list */}
+        <div ref={parent1} className="w-auto">
+          {/* Render un-completed tasks */}
+          {renderTodoList(todoListNew, handleToggleEntryNew, handleDeleteNew)}
+
+          {/* Divider */}
+          <div
+            className={`bg-[#323244] text-white h-10 p-4 flex justify-between items-center ${
+              isReveal ? (todoListDone.length > 0 ? "mb-2" : "") : "rounded-b"
+            }`}
+          >
+            <h1>Completed</h1>
+            <AntSwitch onChange={handleReveal} checked={isReveal} />
+          </div>
+
+          {/* Render completed tasks */}
+          {isReveal &&
+            (todoListDone.length > 0 ? (
+              renderTodoList(
+                todoListDone,
+                handleToggleEntryDone,
+                handleDeleteDone
+              )
+            ) : (
+              <div className="py-2">
+                <p>Nothing completed</p>
+              </div>
+            ))}
         </div>
-      </div>
+      </Paper>
     </div>
   );
 }
