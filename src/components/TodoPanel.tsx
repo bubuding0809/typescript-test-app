@@ -45,7 +45,7 @@ export const TodoPanel: React.FC<TodoListProps> = ({
   });
 
   const handleReveal: React.ChangeEventHandler<HTMLInputElement> = () => {
-    setIsReveal(prevState => {
+    setIsReveal((prevState) => {
       setLocalStorage("isReveal", !prevState);
       return !prevState;
     });
@@ -53,8 +53,8 @@ export const TodoPanel: React.FC<TodoListProps> = ({
 
   const handleDragStart = (initial: DragStart) => {
     const { draggableId, source } = initial;
-    setTodoListNew(prevState => {
-      return prevState.map(todo => {
+    setTodoListNew((prevState) => {
+      return prevState.map((todo) => {
         if (todo.id === draggableId) {
           return {
             ...todo,
@@ -66,7 +66,7 @@ export const TodoPanel: React.FC<TodoListProps> = ({
       });
     });
 
-    setIsDragActive(prevState => ({
+    setIsDragActive((prevState) => ({
       ...prevState,
       active: true,
     }));
@@ -74,10 +74,11 @@ export const TodoPanel: React.FC<TodoListProps> = ({
 
   const handleDragEndActive = (result: DropResult) => {
     console.log(result);
+    const { draggableId, source, destination, combine, type } = result;
 
-    const { draggableId, source, destination } = result;
-    setTodoListNew(prevState => {
-      return prevState.map(todo => {
+    // Set isDragged to false
+    setTodoListNew((prevState) => {
+      return prevState.map((todo) => {
         if (todo.id === draggableId) {
           return {
             ...todo,
@@ -88,15 +89,19 @@ export const TodoPanel: React.FC<TodoListProps> = ({
         }
       });
     });
-    setIsDragActive(prevState => ({
+
+    //set isDrag to false
+    setIsDragActive((prevState) => ({
       ...prevState,
       [source.droppableId]: false,
     }));
 
+    // Check for drop outside droppable zone
     if (!destination) {
       return;
     }
 
+    // Check for no change in postion
     if (
       source.droppableId === destination.droppableId &&
       source.index === destination.index
@@ -104,22 +109,57 @@ export const TodoPanel: React.FC<TodoListProps> = ({
       return;
     }
 
-    const newTodoList = [...todoListNew];
-    const [draggedTodoItem] = newTodoList.splice(source.index, 1);
-    newTodoList.splice(destination.index, 0, draggedTodoItem);
+    // Handle nested subtask re-arrangement
+    if (type !== "active-main") {
+      console.log("re-arranging nested subtasks");
+      const [sourceToplevelItem] = todoListNew.filter(
+        (todo) => todo.id === source.droppableId
+      );
+      console.log(sourceToplevelItem);
+      return;
+    }
 
-    setTodoListNew(
-      newTodoList.map(todo => {
+    // Handle combination of tasks
+    if (combine) {
+      const targetId = combine.draggableId;
+      setTodoListNew((prevState) => {
+        let subTodo: Todo;
+        const newTodoList = prevState
+          .filter((todo) => {
+            if (todo.id === draggableId) {
+              subTodo = todo;
+              return false;
+            }
+            return true;
+          })
+          .map((todo) => {
+            if (todo.id === targetId)
+              return {
+                ...todo,
+                subTasks: [...todo.subTasks, subTodo],
+              };
+            return todo;
+          });
+        setLocalStorage("todoListNew", newTodoList);
+        return newTodoList;
+      });
+    }
+
+    // Handle rearrange ment of top level items and setting isDragged to false
+    setTodoListNew((prevState) => {
+      const newTodoList = prevState;
+      const [draggedTodoItem] = newTodoList.splice(source.index, 1);
+      newTodoList.splice(destination.index, 0, draggedTodoItem);
+      return newTodoList.map((todo) => {
         if (todo.id === draggableId) {
           return {
             ...todo,
             isDragged: false,
           };
-        } else {
-          return { ...todo };
         }
-      })
-    );
+        return todo;
+      });
+    });
   };
 
   const handleDragEndCompleted = (result: DropResult) => {

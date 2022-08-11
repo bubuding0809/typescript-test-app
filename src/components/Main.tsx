@@ -32,7 +32,7 @@ export default function Main() {
       return;
     }
 
-    setTodoListNew(prevState => {
+    setTodoListNew((prevState) => {
       const newTodoList = [
         ...prevState,
         {
@@ -43,6 +43,7 @@ export default function Main() {
           date: todoDateTime ? todoDateTime.format("YYYY-MM-DD") : null,
           time: todoDateTime ? todoDateTime.format("h:mm a") : null,
           description: todoDescription ? todoDescription.trim() : null,
+          subTasks: [],
         },
       ];
       setLocalStorage("todoListNew", newTodoList);
@@ -62,8 +63,8 @@ export default function Main() {
     const newTodoList: Todo[] = [];
     let toggledTodo: Todo;
 
-    setTodoListNew(prevState => {
-      prevState.forEach(todoItem => {
+    setTodoListNew((prevState) => {
+      prevState.forEach((todoItem) => {
         if (todoItem.id === e.target.name) {
           toggledTodo = {
             ...todoItem,
@@ -75,7 +76,7 @@ export default function Main() {
       });
       setLocalStorage("todoListDone", [toggledTodo, ...todoListDone]);
       setLocalStorage("todoListNew", newTodoList);
-      setTodoListDone(prevState => [toggledTodo, ...prevState]);
+      setTodoListDone((prevState) => [toggledTodo, ...prevState]);
       return newTodoList;
     });
   };
@@ -87,8 +88,8 @@ export default function Main() {
     const newTodoList: Todo[] = [];
     let toggledTodo: Todo;
 
-    setTodoListDone(prevState => {
-      prevState.forEach(todoItem => {
+    setTodoListDone((prevState) => {
+      prevState.forEach((todoItem) => {
         if (todoItem.id === e.target.name) {
           toggledTodo = {
             ...todoItem,
@@ -100,7 +101,7 @@ export default function Main() {
       });
       setLocalStorage("todoListNew", [...todoListNew, toggledTodo]);
       setLocalStorage("todoListDone", newTodoList);
-      setTodoListNew(prevState => [...prevState, toggledTodo]);
+      setTodoListNew((prevState) => [...prevState, toggledTodo]);
       return newTodoList;
     });
   };
@@ -113,8 +114,8 @@ export default function Main() {
     const name = buttonRef.current?.name;
     const newTodoList: Todo[] = [];
 
-    setTodoListNew(prevState => {
-      prevState.forEach(todoItem => {
+    setTodoListNew((prevState) => {
+      prevState.forEach((todoItem) => {
         if (name === todoItem.id) {
           return;
         }
@@ -133,8 +134,8 @@ export default function Main() {
     const name = buttonRef.current?.name;
     const newTodoList: Todo[] = [];
 
-    setTodoListDone(prevState => {
-      prevState.forEach(todoItem => {
+    setTodoListDone((prevState) => {
+      prevState.forEach((todoItem) => {
         if (name === todoItem.id) {
           return;
         }
@@ -147,8 +148,8 @@ export default function Main() {
 
   //handle removal of datetime from todo item
   const handleRemoveDateTime = (id: string) => {
-    setTodoListNew(prevState => {
-      const newTodoList = prevState.map(todoItem => {
+    setTodoListNew((prevState) => {
+      const newTodoList = prevState.map((todoItem) => {
         return todoItem.id === id
           ? { ...todoItem, date: "", time: "" }
           : todoItem;

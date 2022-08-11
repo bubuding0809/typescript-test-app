@@ -8,6 +8,7 @@ export type Todo = {
   readonly date: string | null;
   readonly time: string | null;
   readonly description: string | null;
+  readonly subTasks: Todo[];
 };
 
 export type Entry = {

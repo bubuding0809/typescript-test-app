@@ -36,8 +36,12 @@ export const TodoList: React.FC<TodoListProps> = ({
   };
 
   return (
-    <Droppable droppableId={droppableId} isCombineEnabled>
-      {provided => (
+    <Droppable
+      droppableId={droppableId}
+      type={droppableId + "-main"}
+      isCombineEnabled
+    >
+      {(provided) => (
         <div
           className={`
             flex flex-col gap-2 first:rounded-t last:rounded-b p-2 
@@ -49,14 +53,13 @@ export const TodoList: React.FC<TodoListProps> = ({
           {todoList.length ? (
             todoList.map((todo, index) => (
               <Draggable key={todo.id} draggableId={todo.id} index={index}>
-                {provided => (
+                {(provided) => (
                   <TodoItem
                     provided={provided}
                     todo={todo}
                     handleToggle={handleToggle}
                     handleDelete={handleDelete}
                     handleRemoveDateTime={handleRemoveDateTime}
-                    isLast={index === todoList.length - 1 && true}
                   />
                 )}
               </Draggable>
