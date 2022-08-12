@@ -8,10 +8,11 @@ import ClearIcon from "@mui/icons-material/Clear";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import autoAnimate from "@formkit/auto-animate";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
-import { DraggableProvided } from "react-beautiful-dnd";
+import { DraggableProvided, DraggableStateSnapshot } from "react-beautiful-dnd";
 
 interface TodoTaskProps {
   provided: DraggableProvided;
+  snapshot: DraggableStateSnapshot | undefined;
   todo: Todo;
   handleToggle: React.ChangeEventHandler<HTMLInputElement>;
   handleDelete: any;
@@ -20,6 +21,7 @@ interface TodoTaskProps {
 
 export const TodoTask: React.FC<TodoTaskProps> = ({
   provided,
+  snapshot,
   todo,
   handleToggle,
   handleDelete,
@@ -52,11 +54,18 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
     return `${dayOfWeekName}, ${day} ${monthName}`;
   };
 
+  const draggedStyle = () => {
+    return snapshot?.isDragging
+      ? "rounded border-3 border-slate-700 bg-slate-50/80 shadow-solid-small"
+      : "";
+  };
+
   return (
     <div
       className={`
       relative flex justify-between items-center 
-      px-3 py-3 pr-8 
+      px-3 py-3 pr-8
+      ${draggedStyle()}
     `}
       onMouseEnter={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
@@ -75,10 +84,10 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
         <div ref={parent} className="flex flex-col gap-1 items-start">
           <p
             className={`
-          text-start text-ellipsis overflow-hidden 
-          text-[#35605A]
-          ${todo.isChecked ? "text-[#35605a] line-through" : ""}
-        `}
+              text-start text-ellipsis overflow-hidden 
+              font-medium text-[#35605A]
+              ${todo.isChecked ? "text-[#35605a] line-through" : ""}
+            `}
           >
             {todo.message}
           </p>
@@ -104,9 +113,13 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
           )}
         </div>
       </div>
-      <span {...provided.dragHandleProps}>
-        <DragIndicatorIcon />
-      </span>
+
+      {/* Show delete button on hover */}
+      {(isHover || todo.isTopLevelItem) && (
+        <span {...provided.dragHandleProps}>
+          <DragIndicatorIcon sx={{ fontSize: 20 }} />
+        </span>
+      )}
 
       {/* Show delete button on hover */}
       {isHover && (
@@ -118,7 +131,7 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
           }}
           ref={buttonRef}
           size="small"
-          onClick={(e) => handleDelete(e, buttonRef)}
+          onClick={e => handleDelete(e, buttonRef)}
           name={todo.id}
         >
           <ClearIcon

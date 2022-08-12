@@ -1,4 +1,3 @@
-import logo from "./logo.svg";
 import "./App.css";
 import Main from "./components/Main";
 import { Typography } from "@mui/material";
@@ -8,20 +7,27 @@ function App() {
   return (
     <Box
       sx={{
-        textAlign: "center",
-        minWidth: "320px",
+        display: "flex",
+        flexDirection: "column",
+        minWidth: "448px",
+        height: "100vh",
       }}
     >
-      <header className="App-header text-white text-lg bg-[#35605A]">
-        <Typography color="#F7F7F7" variant="h5">
-          Task Tracker
+      <header className="App-header text-white text-lg bg-[#3A5A40]">
+        <Typography
+          color="#F7F7F7"
+          variant="h5"
+          fontWeight={600}
+          letterSpacing={1}
+        >
+          TaskMate
         </Typography>
       </header>
       <Main />
       <footer
         className="
         flex flex-col justify-center items-center
-        h-10 bottom-0 text-white bg-[#35605A] w-full"
+        h-10 sticky bottom-0 text-white w-full bg-[#3A5A40]"
       >
         <Typography variant="subtitle2">
           Copyright © 2022 Bubu Labs. All rights reserved.

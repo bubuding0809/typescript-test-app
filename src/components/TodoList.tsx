@@ -5,6 +5,7 @@ import { Todo } from "../utils/types";
 import { TodoItem } from "./TodoItem";
 
 interface TodoListProps {
+  isCombineEnabled: boolean;
   droppableId: string;
   isDragActive: boolean;
   todoList: Todo[];
@@ -14,6 +15,7 @@ interface TodoListProps {
 }
 
 export const TodoList: React.FC<TodoListProps> = ({
+  isCombineEnabled,
   droppableId,
   isDragActive,
   todoList,
@@ -27,24 +29,19 @@ export const TodoList: React.FC<TodoListProps> = ({
     parent.current && autoAnimate(parent.current);
   }, [parent]);
 
-  const bgColor = () => {
-    if (!isDragActive) {
-      return "bg-gray-200/70";
-    } else {
-      return "bg-[#F0F7EC]";
-    }
-  };
+  const bgColor = () =>
+    !isDragActive ? "bg-gray-200" : "bg-[#F0F7EC] shadow-inner";
 
   return (
     <Droppable
       droppableId={droppableId}
       type={droppableId + "-main"}
-      isCombineEnabled
+      isCombineEnabled={isCombineEnabled}
     >
-      {(provided) => (
+      {provided => (
         <div
           className={`
-            flex flex-col gap-2 first:rounded-t last:rounded-b p-2 
+            flex flex-col gap-2 m-2
             ${bgColor()}
           `}
           ref={provided.innerRef}
@@ -53,7 +50,7 @@ export const TodoList: React.FC<TodoListProps> = ({
           {todoList.length ? (
             todoList.map((todo, index) => (
               <Draggable key={todo.id} draggableId={todo.id} index={index}>
-                {(provided) => (
+                {provided => (
                   <TodoItem
                     provided={provided}
                     todo={todo}
@@ -65,7 +62,7 @@ export const TodoList: React.FC<TodoListProps> = ({
               </Draggable>
             ))
           ) : (
-            <div className="py-2">
+            <div className="py-2 text-center">
               <p>Nothing {droppableId}</p>
             </div>
           )}
