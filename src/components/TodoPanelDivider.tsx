@@ -2,11 +2,15 @@ import { Typography } from "@mui/material";
 import { AntSwitch } from "./AntSwitch";
 
 interface TodoPanelDividerProps {
+  activeCount: number;
+  completedCount: number;
   isReveal: boolean;
   handleReveal: React.ChangeEventHandler<HTMLInputElement>;
 }
 
 export const TodoPanelDivider: React.FC<TodoPanelDividerProps> = ({
+  activeCount,
+  completedCount,
   isReveal,
   handleReveal,
 }: TodoPanelDividerProps) => {
@@ -17,7 +21,9 @@ export const TodoPanelDivider: React.FC<TodoPanelDividerProps> = ({
             ${!isReveal ? "rounded-b" : ""}
           `}
     >
-      <Typography variant="body1">Completed</Typography>
+      <Typography variant="body1">{`${completedCount} / ${
+        activeCount + completedCount
+      } completed`}</Typography>
       <AntSwitch onChange={handleReveal} checked={isReveal} />
     </div>
   );

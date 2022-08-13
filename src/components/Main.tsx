@@ -1,6 +1,5 @@
-import React, { FormEventHandler, useState, RefObject } from "react";
+import React, { FormEventHandler, useState, RefObject, useEffect } from "react";
 import { nanoid } from "nanoid";
-import { Paper, Typography } from "@mui/material";
 import { Todo, Entry } from "../utils/types";
 import { getLocalStorage, setLocalStorage } from "../utils/useLocalStorage";
 import { TodoEntryForm } from "./TodoEntryForm";
@@ -20,6 +19,13 @@ export default function Main() {
     getLocalStorage("todoListDone", [])
   );
 
+  useEffect(() => {
+    setLocalStorage("todoListNew", todoListNew);
+    setLocalStorage("todoListDone", todoListDone);
+
+    console.log("updated local storage");
+  }, [todoListNew, todoListDone]);
+
   //handle new todo entry
   const handleNewEntry: FormEventHandler<HTMLFormElement> = (
     e: React.FormEvent<HTMLFormElement>
@@ -27,13 +33,15 @@ export default function Main() {
     e.preventDefault();
     const { todoMessage, todoDateTime, todoDescription } = newEntry;
 
+    // Ensure that the todoMessage is not empty
     if (!todoMessage.trim()) {
       alert("Enter a task mate");
       return;
     }
 
+    // Update todoListNew with new todo entry
     setTodoListNew(prevState => {
-      const newTodoList = [
+      return [
         ...prevState,
         {
           id: nanoid(),
@@ -51,9 +59,9 @@ export default function Main() {
           subTasks: [],
         },
       ];
-      setLocalStorage("todoListNew", newTodoList);
-      return newTodoList;
     });
+
+    //reset newEntry form
     setNewEntry({
       todoMessage: "",
       todoDateTime: null,
@@ -85,8 +93,6 @@ export default function Main() {
           newTodoList.push(todoItem);
         }
       });
-      setLocalStorage("todoListDone", [toggledTodo, ...todoListDone]);
-      setLocalStorage("todoListNew", newTodoList);
       setTodoListDone(prevState => [toggledTodo, ...prevState]);
       return newTodoList;
     });
@@ -116,75 +122,91 @@ export default function Main() {
           newTodoList.push(todoItem);
         }
       });
-      setLocalStorage("todoListNew", [...todoListNew, toggledTodo]);
-      setLocalStorage("todoListDone", newTodoList);
       setTodoListNew(prevState => [...prevState, toggledTodo]);
       return newTodoList;
+    });
+  };
+
+  //handle toggling of nested todo entry checkbox for active todos
+  const handleToggleSubtask: React.ChangeEventHandler<HTMLInputElement> = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { name: id } = e.target;
+
+    setTodoListNew(prevState => {
+      return prevState.map(todo => {
+        return {
+          ...todo,
+          subTasks: todo.subTasks.map(subTodo => {
+            if (subTodo.id === id) {
+              return {
+                ...subTodo,
+                isChecked: !subTodo.isChecked,
+              };
+            }
+            return subTodo;
+          }),
+        };
+      });
     });
   };
 
   //handle Delete button click for unfinished todos
   const handleDeleteNew = (
     e: React.MouseEvent<HTMLButtonElement>,
-    buttonRef: RefObject<HTMLButtonElement>
+    id: string
   ): void => {
-    const name = buttonRef.current?.name;
     const newTodoList: Todo[] = [];
 
     setTodoListNew(prevState => {
       prevState.forEach(todoItem => {
-        if (name === todoItem.id) {
+        if (todoItem.id === id) {
           return;
         }
         newTodoList.push(todoItem);
       });
       return newTodoList;
     });
-    setLocalStorage("todoListNew", newTodoList);
   };
 
   //handle Delete button click for finished todos
   const handleDeleteDone = (
     e: React.MouseEvent<HTMLButtonElement>,
-    buttonRef: RefObject<HTMLButtonElement>
+    id: string
   ): void => {
-    const name = buttonRef.current?.name;
     const newTodoList: Todo[] = [];
 
     setTodoListDone(prevState => {
       prevState.forEach(todoItem => {
-        if (name === todoItem.id) {
+        if (todoItem.id === id) {
           return;
         }
         newTodoList.push(todoItem);
       });
       return newTodoList;
     });
-    setLocalStorage("todoListDone", newTodoList);
   };
 
   //handle removal of datetime from todo item
   const handleRemoveDateTime = (id: string) => {
     setTodoListNew(prevState => {
-      const newTodoList = prevState.map(todoItem => {
+      return prevState.map(todoItem => {
         return todoItem.id === id
           ? { ...todoItem, date: "", time: "" }
           : todoItem;
       });
-      setLocalStorage("todoListNew", newTodoList);
-      return newTodoList;
     });
   };
 
   return (
     <div
       className="py-5 px-2 h-full
-        flex flex-col items-center justify-start
-        bg-cover bg-green-image overflow-y-auto
+        flex flex-row justify-center items-start gap-4
+        bg-cover bg-green-image overflow-auto
       "
     >
-      {/* Task main */}
-      <div className="flex flex-col gap-2 w-full max-w-md">
+      {/* List */}
+      <div className="flex flex-col gap-2 min-w-sm w-full max-w-sm">
         {/* Task Entry form */}
         <TodoEntryForm
           handleNewEntry={handleNewEntry}
@@ -200,6 +222,7 @@ export default function Main() {
           todoListDone={todoListDone}
           handleToggleEntryNew={handleToggleEntryNew}
           handleToggleEntryDone={handleToggleEntryDone}
+          handleToggleSubtask={handleToggleSubtask}
           handleDeleteNew={handleDeleteNew}
           handleDeleteDone={handleDeleteDone}
           handleRemoveDateTime={handleRemoveDateTime}

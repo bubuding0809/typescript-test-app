@@ -1,32 +1,49 @@
 import React, { useRef, useState, useEffect } from "react";
+import { Collapse, IconButton, Typography } from "@mui/material";
+import { TransitionGroup } from "react-transition-group";
 import { Todo } from "../utils/types";
 import { Divider } from "@mui/material";
 import { Draggable, DraggableProvided, Droppable } from "react-beautiful-dnd";
 import { TodoTask } from "./TodoTask";
+import autoAnimate from "@formkit/auto-animate";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 interface TodoItemProps {
-  provided: DraggableProvided;
   todo: Todo;
+  provided: DraggableProvided;
+  listOrigin: string;
   handleToggle: React.ChangeEventHandler<HTMLInputElement>;
+  handleToggleSubtask: React.ChangeEventHandler<HTMLInputElement>;
   handleDelete: any;
   handleRemoveDateTime: any;
 }
 
 export const TodoItem: React.FC<TodoItemProps> = ({
-  provided,
   todo,
+  provided,
+  listOrigin,
   handleToggle,
+  handleToggleSubtask,
   handleDelete,
   handleRemoveDateTime,
 }: TodoItemProps) => {
+  const [isRevealSubtasks, setIsRevealSubtasks] = useState(false);
+
+  const parent = useRef(null);
+
+  useEffect(() => {
+    parent.current && autoAnimate(parent.current);
+  }, [parent, isRevealSubtasks]);
+
   const nestedListStyle = () => {
     if (!todo.isNestedDragged.isDragged) {
       return "";
     }
     if (todo.isNestedDragged.isSource) {
-      return "bg-emerald-100/50 rounded shadow-inner";
+      return "bg-emerald-100/50 shadow-inner";
     } else {
-      return "bg-sky-100/50 rounded shadow-inner";
+      return "bg-sky-100/50 shadow-inner";
     }
   };
 
@@ -34,6 +51,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
     <div
       ref={provided.innerRef}
       {...provided.draggableProps}
+      {...provided.dragHandleProps}
       className={`
         flex flex-col hover:shadow-inner rounded p-1
         ${todo.isChecked ? "bg-gray-300" : "bg-white"}
@@ -44,9 +62,10 @@ export const TodoItem: React.FC<TodoItemProps> = ({
       `}
     >
       <TodoTask
-        provided={provided}
-        snapshot={undefined}
         todo={todo}
+        provided={provided}
+        listOrigin={listOrigin}
+        snapshot={undefined}
         handleToggle={handleToggle}
         handleDelete={handleDelete}
         handleRemoveDateTime={handleRemoveDateTime}
@@ -54,41 +73,84 @@ export const TodoItem: React.FC<TodoItemProps> = ({
 
       {/* sub tasks */}
       {todo.subTasks.length > 0 && (
-        <div className={`ml-6 py-2 ${nestedListStyle()}`}>
-          <Droppable droppableId={todo.id} type={"active-subtask"}>
-            {provided => (
-              <div ref={provided.innerRef} {...provided.droppableProps}>
-                {todo.subTasks.map((subTodo, index) => (
-                  <Draggable
-                    key={subTodo.id}
-                    draggableId={subTodo.id}
-                    index={index}
-                  >
-                    {(provided, snapshot) => (
-                      <div ref={provided.innerRef} {...provided.draggableProps}>
-                        {!snapshot.isDragging && (
-                          <Divider
-                            sx={{
-                              marginX: 2.5,
-                            }}
-                          />
-                        )}
-                        <TodoTask
-                          provided={provided}
-                          snapshot={snapshot}
-                          todo={subTodo}
-                          handleToggle={() => {}}
-                          handleDelete={() => {}}
-                          handleRemoveDateTime={() => {}}
-                        />
-                      </div>
-                    )}
-                  </Draggable>
-                ))}
-                {provided.placeholder}
-              </div>
+        <div ref={parent} className="flex justify-start items-center p-1">
+          <IconButton
+            sx={{
+              padding: "0",
+              alignSelf: "flex-start",
+            }}
+            size="small"
+            onClick={() => setIsRevealSubtasks(prevState => !prevState)}
+          >
+            {isRevealSubtasks ? (
+              <ExpandMoreIcon sx={{ fontSize: "20px" }} />
+            ) : (
+              <ChevronRightIcon sx={{ fontSize: "20px" }} />
             )}
-          </Droppable>
+          </IconButton>
+          {isRevealSubtasks ? (
+            <div className={`p-1 w-full border rounded ${nestedListStyle()}`}>
+              <Droppable droppableId={todo.id} type={"active-subtask"}>
+                {provided => (
+                  <div ref={provided.innerRef} {...provided.droppableProps}>
+                    <TransitionGroup>
+                      {todo.subTasks.map((subTodo, index) => (
+                        <Collapse key={subTodo.id}>
+                          <Draggable
+                            draggableId={subTodo.id}
+                            index={index}
+                            isDragDisabled={listOrigin !== "active"}
+                          >
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
+                                {...provided.dragHandleProps}
+                              >
+                                {!snapshot.isDragging && index !== 0 && (
+                                  <Divider
+                                    sx={{
+                                      marginX: 2.5,
+                                    }}
+                                  />
+                                )}
+                                <TodoTask
+                                  todo={subTodo}
+                                  listOrigin={listOrigin}
+                                  provided={provided}
+                                  snapshot={snapshot}
+                                  handleToggle={handleToggleSubtask}
+                                  handleDelete={() => {}}
+                                  handleRemoveDateTime={() => {}}
+                                />
+                              </div>
+                            )}
+                          </Draggable>
+                        </Collapse>
+                      ))}
+                    </TransitionGroup>
+                    {provided.placeholder}
+                  </div>
+                )}
+              </Droppable>
+            </div>
+          ) : (
+            <Typography
+              className="
+                rounded border
+                bg-gradient-to-br from-emerald-100/50 to-gray-100
+              "
+              variant="subtitle2"
+              sx={{
+                lineHeight: "20px",
+                width: "100%",
+                paddingX: "10px",
+                paddingY: "2px",
+              }}
+            >
+              {`${todo.subTasks.length} sub tasks`}
+            </Typography>
+          )}
         </div>
       )}
     </div>

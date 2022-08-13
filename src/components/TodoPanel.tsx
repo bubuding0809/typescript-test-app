@@ -14,6 +14,7 @@ interface TodoListProps {
   setTodoListDone: React.Dispatch<React.SetStateAction<Todo[]>>;
   handleToggleEntryNew: ChangeEventHandler<HTMLInputElement>;
   handleToggleEntryDone: ChangeEventHandler<HTMLInputElement>;
+  handleToggleSubtask: ChangeEventHandler<HTMLInputElement>;
   handleDeleteNew: any;
   handleDeleteDone: any;
   handleRemoveDateTime: any;
@@ -26,6 +27,7 @@ export const TodoPanel: React.FC<TodoListProps> = ({
   setTodoListDone,
   handleToggleEntryNew,
   handleToggleEntryDone,
+  handleToggleSubtask,
   handleDeleteNew,
   handleDeleteDone,
   handleRemoveDateTime,
@@ -136,7 +138,7 @@ export const TodoPanel: React.FC<TodoListProps> = ({
       const targetId = combine.draggableId;
       setTodoListNew(prevState => {
         let subTodo: Todo;
-        const newTodoList = prevState
+        return prevState
           .filter(todo => {
             if (todo.id === draggableId) {
               subTodo = { ...todo, isTopLevelItem: false };
@@ -152,8 +154,6 @@ export const TodoPanel: React.FC<TodoListProps> = ({
               };
             return todo;
           });
-        setLocalStorage("todoListNew", newTodoList);
-        return newTodoList;
       });
       return;
     }
@@ -194,7 +194,6 @@ export const TodoPanel: React.FC<TodoListProps> = ({
           }
         });
 
-        setLocalStorage("todoListNew", newTodoList);
         return newTodoList;
       });
       return;
@@ -212,7 +211,6 @@ export const TodoPanel: React.FC<TodoListProps> = ({
         isDragged: false,
       }));
 
-      setLocalStorage("todoListNew", newTodoList);
       return newTodoList;
     });
   };
@@ -266,13 +264,19 @@ export const TodoPanel: React.FC<TodoListProps> = ({
             isDragActive={isDragActive.active}
             todoList={todoListNew}
             handleToggle={handleToggleEntryNew}
+            handleToggleSubtask={handleToggleSubtask}
             handleDelete={handleDeleteNew}
             handleRemoveDateTime={handleRemoveDateTime}
           />
         </DragDropContext>
 
         {/* Active - completed divider */}
-        <TodoPanelDivider isReveal={isReveal} handleReveal={handleReveal} />
+        <TodoPanelDivider
+          activeCount={todoListNew.length}
+          completedCount={todoListDone.length}
+          isReveal={isReveal}
+          handleReveal={handleReveal}
+        />
 
         {/* Render completed tasks */}
         <DragDropContext onDragEnd={handleDragEndCompleted}>
@@ -283,6 +287,7 @@ export const TodoPanel: React.FC<TodoListProps> = ({
               isDragActive={isDragActive.completed}
               todoList={todoListDone}
               handleToggle={handleToggleEntryDone}
+              handleToggleSubtask={handleToggleSubtask}
               handleDelete={handleDeleteDone}
               handleRemoveDateTime={handleDeleteDone}
             />

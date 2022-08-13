@@ -12,6 +12,14 @@ module.exports = {
       backgroundColor: {
         "secondary-green": "#9cb380",
       },
+      minWidth: {
+        sm: "20rem",
+        md: "24rem",
+        lg: "28rem",
+        xl: "32rem",
+        "2xl": "36rem",
+        "3xl": "40rem",
+      },
       minHeight: {
         10: "10px",
         20: "20px",
@@ -27,6 +35,9 @@ module.exports = {
         "70%": "70%",
         "80%": "80%",
         "90%": "90%",
+      },
+      boxShadow: {
+        "solid-small": "2.5px 2.5px 1px #94a3b8",
       },
     },
   },
