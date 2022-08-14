@@ -1,11 +1,20 @@
 import { Todo } from "../utils/types";
 import { getLocalStorage, setLocalStorage } from "../utils/useLocalStorage";
-import { ChangeEventHandler, useEffect, useState, useRef } from "react";
+import React, { ChangeEventHandler, useEffect, useState, useRef } from "react";
 import autoAnimate from "@formkit/auto-animate";
 import { DragDropContext, DropResult, DragStart } from "react-beautiful-dnd";
 import { TodoPanelDivider } from "./TodoPanelDivider";
 import { TodoList } from "./TodoList";
-import { Typography, Paper } from "@mui/material";
+import {
+  Typography,
+  Paper,
+  styled,
+  TextField,
+  InputAdornment,
+  Button,
+  IconButton,
+} from "@mui/material";
+import { Save } from "@mui/icons-material";
 
 interface TodoListProps {
   todoListNew: Todo[];
@@ -19,6 +28,30 @@ interface TodoListProps {
   handleDeleteDone: any;
   handleRemoveDateTime: any;
 }
+
+const StyledTextField = styled(TextField)({
+  "& label.Mui-focused": {
+    color: "#35605A",
+  },
+  "& .MuiInput-underline:after": {
+    borderBottomColor: "#35605A",
+  },
+  "& .MuiOutlinedInput-root": {
+    "& fieldset": {
+      borderColor: "#35605A",
+    },
+    "&:hover fieldset": {
+      borderColor: "#35605A",
+    },
+    "&.Mui-focused fieldset": {
+      borderColor: "#35605A",
+    },
+  },
+  "& .MuiInputBase-input": {
+    fontSize: "18px",
+    fontWeight: "600",
+  },
+});
 
 export const TodoPanel: React.FC<TodoListProps> = ({
   todoListNew,
@@ -38,6 +71,12 @@ export const TodoPanel: React.FC<TodoListProps> = ({
     parent.current && autoAnimate(parent.current);
   }, [parent]);
 
+  const [isEditPanelTitle, setIsEditPanelTitle] = useState(false);
+
+  const [panelTitle, setPanelTitle] = useState<string>(
+    getLocalStorage("panelTitle", "Todo panel")
+  );
+
   const [isReveal, setIsReveal] = useState<boolean>(
     getLocalStorage("isReveal", false)
   );
@@ -48,6 +87,17 @@ export const TodoPanel: React.FC<TodoListProps> = ({
   });
 
   const [isCombineEnabled, setIsCombineEnabled] = useState<boolean>(false);
+
+  const handleSavePanelTitle: React.FormEventHandler = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!panelTitle.trim()) {
+      alert("Enter a title");
+      return;
+    }
+    setLocalStorage("panelTitle", panelTitle.trim());
+    setIsEditPanelTitle(false);
+  };
 
   const handleReveal: React.ChangeEventHandler<HTMLInputElement> = () => {
     setIsReveal(prevState => {
@@ -82,7 +132,6 @@ export const TodoPanel: React.FC<TodoListProps> = ({
 
   const handleDragStart = (initial: DragStart) => {
     const { draggableId, source, type } = initial;
-    console.log(initial);
     // Set source todo isNestedDragged to true if draggable type is "main"
     if (type !== "active-main") {
       setTodoListNew(prevState => {
@@ -134,7 +183,6 @@ export const TodoPanel: React.FC<TodoListProps> = ({
 
     // Handle combination of tasks
     if (combine) {
-      console.info("Combining tasks", draggableId, combine.draggableId);
       const targetId = combine.draggableId;
       setTodoListNew(prevState => {
         let subTodo: Todo;
@@ -160,7 +208,6 @@ export const TodoPanel: React.FC<TodoListProps> = ({
 
     // Check for drop outside droppable zone
     if (!destination) {
-      console.info("Drop outside droppable zone");
       return;
     }
 
@@ -169,7 +216,6 @@ export const TodoPanel: React.FC<TodoListProps> = ({
       source.droppableId === destination.droppableId &&
       source.index === destination.index
     ) {
-      console.info("No change in position");
       return;
     }
 
@@ -246,9 +292,41 @@ export const TodoPanel: React.FC<TodoListProps> = ({
     >
       {/* Panel header */}
       <div className="flex px-3 pt-2 bg-gray-200 rounded-t">
-        <Typography variant="body1" fontWeight={600} fontSize={18} color="">
-          School Work
-        </Typography>
+        {!isEditPanelTitle ? (
+          <Typography
+            className="w-full cursor-custom-cursor"
+            variant="body2"
+            fontWeight={600}
+            fontSize={18}
+            onDoubleClick={() => setIsEditPanelTitle(true)}
+          >
+            {panelTitle}
+          </Typography>
+        ) : (
+          <form className="w-full" onSubmit={handleSavePanelTitle}>
+            <StyledTextField
+              autoFocus
+              variant="standard"
+              type="text"
+              fullWidth
+              value={panelTitle}
+              onChange={e => setPanelTitle(e.target.value)}
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton size="small" onClick={handleSavePanelTitle}>
+                      <Save
+                        sx={{
+                          fontSize: "20px",
+                        }}
+                      />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </form>
+        )}
       </div>
 
       {/* Panel body */}

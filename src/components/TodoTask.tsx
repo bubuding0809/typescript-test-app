@@ -1,16 +1,11 @@
 import React, { useRef, useState, useEffect } from "react";
 import { Todo } from "../utils/types";
-import { IconButton, Chip, Typography } from "@mui/material";
-import Checkbox from "@mui/material/Checkbox";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
-import ClearIcon from "@mui/icons-material/Clear";
+import { Chip, Typography } from "@mui/material";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import autoAnimate from "@formkit/auto-animate";
-import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { DraggableProvided, DraggableStateSnapshot } from "react-beautiful-dnd";
 import { TodoTaskMenu } from "./TodoTaskMenu";
-import { Box } from "@mui/system";
+import { BpCheckBox } from "./BpCheckBox";
 
 interface TodoTaskProps {
   todo: Todo;
@@ -74,21 +69,18 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
     >
       {/* todo item content */}
       <div className="flex items-center">
-        <Checkbox
+        <BpCheckBox
           className="self-start"
-          size="small"
           name={todo.id}
           checked={todo.isChecked}
           onChange={handleToggle}
-          icon={<RadioButtonUncheckedIcon />}
-          checkedIcon={<CheckCircleIcon color="success" />}
         />
         <div ref={parent} className="flex flex-col gap-1 items-start">
           <p
             className={`
               text-start text-ellipsis overflow-hidden 
-              font-medium text-[#35605A]
-              ${todo.isChecked ? "text-[#35605a] line-through" : ""}
+              font-normal text-black
+              ${todo.isChecked ? "line-through" : ""}
             `}
           >
             {todo.message}
@@ -119,7 +111,11 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
       {/* Show delete button on hover */}
       {isHover && (
         <div className="absolute top-2 right-0">
-          <TodoTaskMenu id={todo.id} handleDelete={handleDelete} />
+          <TodoTaskMenu
+            todo={todo}
+            listOrigin={listOrigin}
+            handleDelete={handleDelete}
+          />
         </div>
       )}
     </div>

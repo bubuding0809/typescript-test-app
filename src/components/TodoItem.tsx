@@ -36,6 +36,13 @@ export const TodoItem: React.FC<TodoItemProps> = ({
     parent.current && autoAnimate(parent.current);
   }, [parent, isRevealSubtasks]);
 
+  const nestListPreviewStyle = () => {
+    if (listOrigin === "active") {
+      return "bg-gradient-to-br from-emerald-100/50 to-gray-100";
+    }
+    return "bg-gradient-to-br from-gray-100/50 to-slate-200/50";
+  };
+
   const nestedListStyle = () => {
     if (!todo.isNestedDragged.isDragged) {
       return "";
@@ -88,6 +95,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
               <ChevronRightIcon sx={{ fontSize: "20px" }} />
             )}
           </IconButton>
+
           {isRevealSubtasks ? (
             <div className={`p-1 w-full border rounded ${nestedListStyle()}`}>
               <Droppable droppableId={todo.id} type={"active-subtask"}>
@@ -120,8 +128,8 @@ export const TodoItem: React.FC<TodoItemProps> = ({
                                   provided={provided}
                                   snapshot={snapshot}
                                   handleToggle={handleToggleSubtask}
-                                  handleDelete={() => {}}
-                                  handleRemoveDateTime={() => {}}
+                                  handleDelete={handleDelete}
+                                  handleRemoveDateTime={handleRemoveDateTime}
                                 />
                               </div>
                             )}
@@ -136,10 +144,10 @@ export const TodoItem: React.FC<TodoItemProps> = ({
             </div>
           ) : (
             <Typography
-              className="
-                rounded border
-                bg-gradient-to-br from-emerald-100/50 to-gray-100
-              "
+              className={`
+                rounded border cursor-pointer
+                ${nestListPreviewStyle()}
+              `}
               variant="subtitle2"
               sx={{
                 lineHeight: "20px",
@@ -147,6 +155,7 @@ export const TodoItem: React.FC<TodoItemProps> = ({
                 paddingX: "10px",
                 paddingY: "2px",
               }}
+              onClick={() => setIsRevealSubtasks(true)}
             >
               {`${todo.subTasks.length} sub tasks`}
             </Typography>

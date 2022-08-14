@@ -4,7 +4,7 @@ import { Droppable, Draggable } from "react-beautiful-dnd";
 import { Todo } from "../utils/types";
 import { TodoItem } from "./TodoItem";
 import { TransitionGroup } from "react-transition-group";
-import { Collapse, Fade, Grow } from "@mui/material";
+import { Collapse } from "@mui/material";
 
 interface TodoListProps {
   isCombineEnabled: boolean;

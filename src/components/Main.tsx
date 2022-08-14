@@ -1,9 +1,10 @@
-import React, { FormEventHandler, useState, RefObject, useEffect } from "react";
+import React, { FormEventHandler, useState, useEffect } from "react";
 import { nanoid } from "nanoid";
 import { Todo, Entry } from "../utils/types";
 import { getLocalStorage, setLocalStorage } from "../utils/useLocalStorage";
 import { TodoEntryForm } from "./TodoEntryForm";
 import { TodoPanel } from "./TodoPanel";
+import { toUnicode } from "punycode";
 
 export default function Main() {
   const [newEntry, setNewEntry] = useState<Entry>({
@@ -22,8 +23,6 @@ export default function Main() {
   useEffect(() => {
     setLocalStorage("todoListNew", todoListNew);
     setLocalStorage("todoListDone", todoListDone);
-
-    console.log("updated local storage");
   }, [todoListNew, todoListDone]);
 
   //handle new todo entry
@@ -156,16 +155,19 @@ export default function Main() {
     e: React.MouseEvent<HTMLButtonElement>,
     id: string
   ): void => {
-    const newTodoList: Todo[] = [];
-
     setTodoListNew(prevState => {
-      prevState.forEach(todoItem => {
-        if (todoItem.id === id) {
-          return;
+      return prevState.reduce((newTodoList: Todo[], todo: Todo) => {
+        if (todo.id !== id) {
+          return [
+            ...newTodoList,
+            {
+              ...todo,
+              subTasks: todo.subTasks.filter((todo: Todo) => todo.id !== id),
+            },
+          ];
         }
-        newTodoList.push(todoItem);
-      });
-      return newTodoList;
+        return newTodoList;
+      }, []);
     });
   };
 
@@ -195,6 +197,23 @@ export default function Main() {
           ? { ...todoItem, date: "", time: "" }
           : todoItem;
       });
+    });
+
+    setTodoListNew(prevState => {
+      return prevState.reduce((newTodoList: Todo[], todo: Todo) => {
+        if (todo.id !== id) {
+          return [
+            ...newTodoList,
+            {
+              ...todo,
+              subTasks: todo.subTasks.map((todo: Todo) =>
+                todo.id === id ? { ...todo, date: "", time: "" } : todo
+              ),
+            },
+          ];
+        }
+        return [...newTodoList, { ...todo, date: "", time: "" }];
+      }, []);
     });
   };
 

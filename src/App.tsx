@@ -15,11 +15,13 @@ function App() {
     >
       <header className="App-header text-white text-lg bg-[#3A5A40]">
         <Typography
+          className="relative"
           color="#F7F7F7"
           variant="h5"
           fontWeight={600}
           letterSpacing={1}
         >
+          <img src="/gifs/pen.gif" className="absolute w-8 rounded -left-10" />
           TaskMate
         </Typography>
       </header>

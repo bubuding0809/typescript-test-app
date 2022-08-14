@@ -39,6 +39,9 @@ module.exports = {
       boxShadow: {
         "solid-small": "2.5px 2.5px 1px #94a3b8",
       },
+      cursor: {
+        "custom-cursor": "url(/public/cursors/cursoredit.gif), pointer",
+      },
     },
   },
   plugins: [],
