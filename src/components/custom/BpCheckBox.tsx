@@ -56,6 +56,7 @@ export const BpCheckBox = (props: CheckboxProps) => {
     <Checkbox
       sx={{
         "&:hover": { bgcolor: "transparent" },
+        padding: 0.5,
       }}
       checkedIcon={<BpCheckedIcon />}
       icon={<BpIcon />}

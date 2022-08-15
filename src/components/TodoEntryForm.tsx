@@ -11,7 +11,7 @@ import { Paper, TextField } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import { ClickAwayListener } from "@mui/base";
 import { Entry } from "../utils/types";
-import { NewEntryConfig } from "./NewEntryConfig";
+import { NewEntryConfig } from "./TodoEntryFormConfig";
 
 interface TodoEntryFormProps {
   handleNewEntry: FormEventHandler<HTMLFormElement>;

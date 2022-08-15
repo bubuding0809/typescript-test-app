@@ -37,7 +37,7 @@ module.exports = {
         "90%": "90%",
       },
       boxShadow: {
-        "solid-small": "2.5px 2.5px 1px #94a3b8",
+        "solid-small": "3px 3px 0.5px #94a3b8",
       },
       cursor: {
         "custom-cursor": "url(/public/cursors/cursoredit.gif), pointer",

@@ -12,12 +12,14 @@ interface TodoTaskMenuProps {
   todo: Todo;
   listOrigin: string;
   handleDelete: any;
+  handleUnappend: any;
 }
 
 export const TodoTaskMenu: React.FC<TodoTaskMenuProps> = ({
   todo,
   listOrigin,
   handleDelete,
+  handleUnappend,
 }: TodoTaskMenuProps) => {
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -68,7 +70,7 @@ export const TodoTaskMenu: React.FC<TodoTaskMenuProps> = ({
             TransitionComponent={Fade}
             TransitionProps={{ timeout: 1000 }}
           >
-            <MenuItem onClick={e => handleDelete(e, todo.id)}>
+            <MenuItem onClick={() => handleDelete(todo.id)}>
               <DeleteForeverIcon sx={{ fontSize: "20px", marginRight: 1 }} />
               <Typography variant="body2">Delete</Typography>
             </MenuItem>
@@ -81,7 +83,7 @@ export const TodoTaskMenu: React.FC<TodoTaskMenuProps> = ({
             TransitionComponent={Fade}
             TransitionProps={{ timeout: 1000 }}
           >
-            <MenuItem onClick={handleClose}>
+            <MenuItem onClick={() => handleUnappend(todo.id)}>
               <SubdirectoryArrowLeftIcon
                 sx={{ fontSize: "20px", marginRight: 1 }}
               />

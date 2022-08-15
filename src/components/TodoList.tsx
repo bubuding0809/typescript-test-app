@@ -15,6 +15,7 @@ interface TodoListProps {
   handleToggleSubtask: React.ChangeEventHandler<HTMLInputElement>;
   handleDelete: any;
   handleRemoveDateTime: any;
+  handleUnappendSubtask: any;
 }
 
 export const TodoList: React.FC<TodoListProps> = ({
@@ -26,6 +27,7 @@ export const TodoList: React.FC<TodoListProps> = ({
   handleToggleSubtask,
   handleDelete,
   handleRemoveDateTime,
+  handleUnappendSubtask,
 }: TodoListProps) => {
   // Set up autoAnimation of div element
   const parent = useRef<HTMLDivElement>(null);
@@ -35,8 +37,7 @@ export const TodoList: React.FC<TodoListProps> = ({
   }, [parent]);
 
   // Change bg color of list when drag is active
-  const bgColor = () =>
-    isDragActive ? "bg-[#F0F7EC] shadow-inner" : "bg-gray-200";
+  const bgColor = () => (isDragActive ? "bg-[#F0F7EC] shadow-inner" : "");
 
   return (
     <Droppable
@@ -46,7 +47,7 @@ export const TodoList: React.FC<TodoListProps> = ({
     >
       {provided => (
         <div
-          className={`m-2 ${bgColor()}`}
+          className={`m-2 rounded ${bgColor()}`}
           ref={provided.innerRef}
           {...provided.droppableProps}
         >
@@ -64,6 +65,7 @@ export const TodoList: React.FC<TodoListProps> = ({
                         handleToggleSubtask={handleToggleSubtask}
                         handleDelete={handleDelete}
                         handleRemoveDateTime={handleRemoveDateTime}
+                        handleUnappendSubtask={handleUnappendSubtask}
                       />
                     )}
                   </Draggable>

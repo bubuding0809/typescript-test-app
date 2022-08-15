@@ -2,10 +2,11 @@ import React, { useRef, useState, useEffect } from "react";
 import { Todo } from "../utils/types";
 import { Chip, Typography } from "@mui/material";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import DescriptionIcon from "@mui/icons-material/Description";
 import autoAnimate from "@formkit/auto-animate";
 import { DraggableProvided, DraggableStateSnapshot } from "react-beautiful-dnd";
 import { TodoTaskMenu } from "./TodoTaskMenu";
-import { BpCheckBox } from "./BpCheckBox";
+import { BpCheckBox } from "./custom/BpCheckBox";
 
 interface TodoTaskProps {
   todo: Todo;
@@ -15,6 +16,7 @@ interface TodoTaskProps {
   handleToggle: React.ChangeEventHandler<HTMLInputElement>;
   handleDelete: any;
   handleRemoveDateTime: any;
+  handleUnappendSubtask: any;
 }
 
 export const TodoTask: React.FC<TodoTaskProps> = ({
@@ -24,6 +26,7 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
   handleToggle,
   handleDelete,
   handleRemoveDateTime,
+  handleUnappendSubtask,
 }) => {
   // Set up autoAnimation of ul element
   const parent = useRef<HTMLDivElement>(null);
@@ -61,34 +64,62 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
     <div
       className={`
       relative flex justify-between items-center 
-      px-1 py-1 pr-6
+      px-1 py-1 
       ${draggedStyle()}
     `}
       onMouseEnter={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
     >
       {/* todo item content */}
-      <div className="flex items-center">
-        <BpCheckBox
-          className="self-start"
-          name={todo.id}
-          checked={todo.isChecked}
-          onChange={handleToggle}
-        />
-        <div ref={parent} className="flex flex-col gap-1 items-start">
-          <p
-            className={`
-              text-start text-ellipsis overflow-hidden 
-              font-normal text-black
-              ${todo.isChecked ? "line-through" : ""}
-            `}
+      <div className="flex flex-col items-stretch w-full mr-4">
+        {/* CheckBox and task title */}
+        <div className="flex justify-start items-start gap-1">
+          <BpCheckBox
+            className="self-start"
+            name={todo.id}
+            checked={todo.isChecked}
+            onChange={handleToggle}
+          />
+          <Typography
+            sx={{
+              textDecoration: todo.isChecked ? "line-through" : "",
+              width: "100%",
+            }}
           >
             {todo.message}
-          </p>
+          </Typography>
+          {isHover && (
+            <div className="absolute -right-0.5 top-0.5">
+              <TodoTaskMenu
+                handleUnappend={handleUnappendSubtask}
+                todo={todo}
+                listOrigin={listOrigin}
+                handleDelete={handleDelete}
+              />
+            </div>
+          )}
+        </div>
+
+        {/* Task details: description, time, etc... */}
+        <div ref={parent} className="flex flex-col gap-1 ml-6 items-start">
           {todo.description && (
-            <Typography textAlign="left" variant="body2" color="textSecondary">
-              {todo.description}
-            </Typography>
+            <div className="flex gap-1">
+              <DescriptionIcon
+                sx={{
+                  color: "#9cb380",
+                  opacity: 0.8,
+                  fontSize: "18px",
+                }}
+              />
+              <Typography
+                textAlign="left"
+                variant="body2"
+                color="textSecondary"
+              >
+                {todo.description}
+              </Typography>
+              {/* Show delete button on hover */}
+            </div>
           )}
           {todo.date && (
             <Chip
@@ -107,17 +138,6 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
           )}
         </div>
       </div>
-
-      {/* Show delete button on hover */}
-      {isHover && (
-        <div className="absolute top-2 right-0">
-          <TodoTaskMenu
-            todo={todo}
-            listOrigin={listOrigin}
-            handleDelete={handleDelete}
-          />
-        </div>
-      )}
     </div>
   );
 };

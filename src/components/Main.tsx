@@ -4,9 +4,12 @@ import { Todo, Entry } from "../utils/types";
 import { getLocalStorage, setLocalStorage } from "../utils/useLocalStorage";
 import { TodoEntryForm } from "./TodoEntryForm";
 import { TodoPanel } from "./TodoPanel";
-import { toUnicode } from "punycode";
+import Confetti from "react-confetti";
+import { useWindowSize } from "@react-hook/window-size";
 
 export default function Main() {
+  const [windowWidth, windowHeight] = useWindowSize();
+
   const [newEntry, setNewEntry] = useState<Entry>({
     todoMessage: "",
     todoDateTime: null,
@@ -16,13 +19,23 @@ export default function Main() {
   const [todoListNew, setTodoListNew] = useState<Todo[]>(
     getLocalStorage("todoListNew", [])
   );
+
   const [todoListDone, setTodoListDone] = useState<Todo[]>(
     getLocalStorage("todoListDone", [])
   );
 
+  const [isShowConfetti, setIsShowConfetti] = useState<boolean>(false);
+
   useEffect(() => {
     setLocalStorage("todoListNew", todoListNew);
     setLocalStorage("todoListDone", todoListDone);
+
+    if (todoListDone.length && !todoListNew.length) {
+      setIsShowConfetti(true);
+      setTimeout(() => {
+        setIsShowConfetti(false);
+      }, 3000);
+    }
   }, [todoListNew, todoListDone]);
 
   //handle new todo entry
@@ -151,10 +164,7 @@ export default function Main() {
   };
 
   //handle Delete button click for unfinished todos
-  const handleDeleteNew = (
-    e: React.MouseEvent<HTMLButtonElement>,
-    id: string
-  ): void => {
+  const handleDeleteNew = (id: string): void => {
     setTodoListNew(prevState => {
       return prevState.reduce((newTodoList: Todo[], todo: Todo) => {
         if (todo.id !== id) {
@@ -172,10 +182,7 @@ export default function Main() {
   };
 
   //handle Delete button click for finished todos
-  const handleDeleteDone = (
-    e: React.MouseEvent<HTMLButtonElement>,
-    id: string
-  ): void => {
+  const handleDeleteDone = (id: string): void => {
     const newTodoList: Todo[] = [];
 
     setTodoListDone(prevState => {
@@ -217,6 +224,33 @@ export default function Main() {
     });
   };
 
+  //handle moving of subtask to top level
+  const handleUnappendSubtask = (id: string) => {
+    setTodoListNew(prevState => {
+      return prevState.reduce((newTodoList: Todo[], todo: Todo) => {
+        let unappendedTodo: Todo | undefined;
+
+        // If the subtask is found under the top level task, filter it out of the list and save it in the unappendedTodo variable
+        const newTodo = {
+          ...todo,
+          subTasks: todo.subTasks.filter((subTodo: Todo) => {
+            if (subTodo.id === id) {
+              unappendedTodo = subTodo;
+              return false;
+            }
+            return true;
+          }),
+        };
+
+        // if unappendedTodo is defined, add it to newTodoList
+        if (unappendedTodo) {
+          return [...newTodoList, newTodo, unappendedTodo];
+        }
+        return [...newTodoList, newTodo];
+      }, []);
+    });
+  };
+
   return (
     <div
       className="py-5 px-2 h-full
@@ -224,6 +258,7 @@ export default function Main() {
         bg-cover bg-green-image overflow-auto
       "
     >
+      {isShowConfetti && <Confetti width={windowWidth} height={windowHeight} />}
       {/* List */}
       <div className="flex flex-col gap-2 min-w-sm w-full max-w-sm">
         {/* Task Entry form */}
@@ -245,6 +280,7 @@ export default function Main() {
           handleDeleteNew={handleDeleteNew}
           handleDeleteDone={handleDeleteDone}
           handleRemoveDateTime={handleRemoveDateTime}
+          handleUnappendSubtask={handleUnappendSubtask}
         />
       </div>
     </div>

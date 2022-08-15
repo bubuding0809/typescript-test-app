@@ -5,16 +5,16 @@ import autoAnimate from "@formkit/auto-animate";
 import { DragDropContext, DropResult, DragStart } from "react-beautiful-dnd";
 import { TodoPanelDivider } from "./TodoPanelDivider";
 import { TodoList } from "./TodoList";
+import { Save } from "@mui/icons-material";
 import {
   Typography,
   Paper,
   styled,
   TextField,
   InputAdornment,
-  Button,
   IconButton,
+  Tooltip,
 } from "@mui/material";
-import { Save } from "@mui/icons-material";
 
 interface TodoListProps {
   todoListNew: Todo[];
@@ -27,6 +27,7 @@ interface TodoListProps {
   handleDeleteNew: any;
   handleDeleteDone: any;
   handleRemoveDateTime: any;
+  handleUnappendSubtask: any;
 }
 
 const StyledTextField = styled(TextField)({
@@ -64,6 +65,7 @@ export const TodoPanel: React.FC<TodoListProps> = ({
   handleDeleteNew,
   handleDeleteDone,
   handleRemoveDateTime,
+  handleUnappendSubtask,
 }: TodoListProps) => {
   // Set up autoAnimation of ul element
   const parent = useRef<HTMLDivElement>(null);
@@ -285,23 +287,27 @@ export const TodoPanel: React.FC<TodoListProps> = ({
   return (
     <Paper
       sx={{
-        backgroundColor: "#e5e7eb",
+        backgroundColor: "rgba(220, 220, 220, 0.6)",
+        border: "1px solid rgba(175, 175, 175, 0.36)",
+        boxShadow: "0 4px 30px rgba(0, 0, 0, 0.1)",
       }}
       className="flex flex-col"
       elevation={3}
     >
       {/* Panel header */}
-      <div className="flex px-3 pt-2 bg-gray-200 rounded-t">
+      <div className="flex px-3 pt-2 rounded-t">
         {!isEditPanelTitle ? (
-          <Typography
-            className="w-full cursor-custom-cursor"
-            variant="body2"
-            fontWeight={600}
-            fontSize={18}
-            onDoubleClick={() => setIsEditPanelTitle(true)}
-          >
-            {panelTitle}
-          </Typography>
+          <Tooltip title="Double-click to edit" placement="right-start">
+            <Typography
+              className="cursor-custom-cursor"
+              variant="body2"
+              fontWeight={600}
+              fontSize={18}
+              onDoubleClick={() => setIsEditPanelTitle(true)}
+            >
+              {panelTitle}
+            </Typography>
+          </Tooltip>
         ) : (
           <form className="w-full" onSubmit={handleSavePanelTitle}>
             <StyledTextField
@@ -345,6 +351,7 @@ export const TodoPanel: React.FC<TodoListProps> = ({
             handleToggleSubtask={handleToggleSubtask}
             handleDelete={handleDeleteNew}
             handleRemoveDateTime={handleRemoveDateTime}
+            handleUnappendSubtask={handleUnappendSubtask}
           />
         </DragDropContext>
 
@@ -365,9 +372,10 @@ export const TodoPanel: React.FC<TodoListProps> = ({
               isDragActive={isDragActive.completed}
               todoList={todoListDone}
               handleToggle={handleToggleEntryDone}
-              handleToggleSubtask={handleToggleSubtask}
+              handleToggleSubtask={() => {}}
               handleDelete={handleDeleteDone}
-              handleRemoveDateTime={handleDeleteDone}
+              handleRemoveDateTime={() => {}}
+              handleUnappendSubtask={() => {}}
             />
           )}
         </DragDropContext>

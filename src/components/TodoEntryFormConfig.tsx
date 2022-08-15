@@ -9,7 +9,7 @@ import {
   TextareaAutosize,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import ChatIcon from "@mui/icons-material/Chat";
+import DescriptionIcon from "@mui/icons-material/Description";
 import { AdapterMoment } from "@mui/x-date-pickers/AdapterMoment";
 import { MobileDateTimePicker } from "@mui/x-date-pickers/MobileDateTimePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers";
@@ -107,10 +107,13 @@ export const NewEntryConfig: React.FC<NewEntryConfigProps> = ({
 
         {/* config button group */}
         <div>
-          <ButtonGroup variant="text" size="small">
+          <ButtonGroup variant="text" size="small" color="success">
             <Button
               sx={{
                 color: "#9cb380",
+                ":hover": {
+                  color: "#3A5A40",
+                },
               }}
               onClick={() => setIsOpenDateTime(true)}
             >
@@ -123,10 +126,13 @@ export const NewEntryConfig: React.FC<NewEntryConfigProps> = ({
             <Button
               sx={{
                 color: "#9cb380",
+                ":hover": {
+                  color: "#3A5A40",
+                },
               }}
               onClick={() => setIsRevealDescription(prevState => !prevState)}
             >
-              <ChatIcon
+              <DescriptionIcon
                 sx={{
                   fontSize: "20px",
                 }}
@@ -135,6 +141,9 @@ export const NewEntryConfig: React.FC<NewEntryConfigProps> = ({
             <Button
               sx={{
                 color: "#9cb380",
+                ":hover": {
+                  color: "#3A5A40",
+                },
               }}
             >
               <FlagCircle
@@ -151,6 +160,9 @@ export const NewEntryConfig: React.FC<NewEntryConfigProps> = ({
           sx={{
             color: "#f7f7f7",
             backgroundColor: "#9cb380",
+            ":hover": {
+              backgroundColor: "#3A5A40",
+            },
           }}
           size="small"
           aria-label="add"
