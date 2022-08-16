@@ -37,7 +37,8 @@ export const TodoList: React.FC<TodoListProps> = ({
   }, [parent]);
 
   // Change bg color of list when drag is active
-  const bgColor = () => (isDragActive ? "bg-[#F0F7EC] shadow-inner" : "");
+  const bgColor = () =>
+    isDragActive ? "transition ease delay-200 bg-[#F0F7EC]/80" : "";
 
   return (
     <Droppable
@@ -45,9 +46,15 @@ export const TodoList: React.FC<TodoListProps> = ({
       type={droppableId + "-main"}
       isCombineEnabled={isCombineEnabled}
     >
-      {provided => (
+      {(provided, snapshot) => (
         <div
-          className={`m-2 rounded ${bgColor()}`}
+          className={`m-2 rounded 
+            ${
+              snapshot.isDraggingOver
+                ? "transition ease-in delay-200 bg-[#F0F7EC] shadow-inner"
+                : bgColor()
+            }
+          `}
           ref={provided.innerRef}
           {...provided.droppableProps}
         >

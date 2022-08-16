@@ -235,7 +235,10 @@ export default function Main() {
           ...todo,
           subTasks: todo.subTasks.filter((subTodo: Todo) => {
             if (subTodo.id === id) {
-              unappendedTodo = subTodo;
+              unappendedTodo = {
+                ...subTodo,
+                isTopLevelItem: true,
+              };
               return false;
             }
             return true;

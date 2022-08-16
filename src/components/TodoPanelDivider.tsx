@@ -2,8 +2,6 @@ import { Typography } from "@mui/material";
 import { AntSwitch } from "./custom/AntSwitch";
 import TaskIcon from "@mui/icons-material/Task";
 import BorderLinearProgress from "./custom/BorderedLinearProgress";
-import Confetti from "react-confetti";
-import { useWindowSize } from "@react-hook/window-size";
 
 interface TodoPanelDividerProps {
   activeCount: number;
