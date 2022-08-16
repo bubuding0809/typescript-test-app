@@ -9,15 +9,44 @@ export type Todo = {
   readonly subTasks: Todo[];
   readonly isTopLevelItem: boolean;
   readonly isChecked: boolean;
-  readonly isDragged: boolean;
-  readonly isNestedDragged: {
-    isDragged: boolean;
-    isSource: boolean;
-  };
 };
 
 export type Entry = {
   readonly todoMessage: string;
   readonly todoDateTime: Moment | null;
   readonly todoDescription: string;
+};
+
+export type TaskType = {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  description: string;
+  subtasks: string[];
+  isCompleted: boolean;
+  isTopLevel: boolean;
+};
+
+export type TasksType = {
+  [key: string]: TaskType;
+};
+
+export type PanelType = {
+  id: string;
+  title: string;
+  active: string[];
+  completed: string[];
+};
+
+export type PanelsType = {
+  [key: string]: PanelType;
+};
+
+export type PanelOrderType = string[];
+
+export type BoardType = {
+  todoTasks: TasksType;
+  panels: PanelsType;
+  panelOrder: PanelOrderType;
 };

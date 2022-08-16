@@ -6,17 +6,17 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import ClearIcon from "@mui/icons-material/Clear";
 import SubdirectoryArrowLeftIcon from "@mui/icons-material/SubdirectoryArrowLeft";
-import { Todo } from "../utils/types";
+import { TaskType, Todo } from "../utils/types";
 
 interface TodoTaskMenuProps {
-  todo: Todo;
+  task: TaskType;
   listOrigin: string;
   handleDelete: any;
   handleUnappend: any;
 }
 
 export const TodoTaskMenu: React.FC<TodoTaskMenuProps> = ({
-  todo,
+  task,
   listOrigin,
   handleDelete,
   handleUnappend,
@@ -63,27 +63,27 @@ export const TodoTaskMenu: React.FC<TodoTaskMenuProps> = ({
           horizontal: "left",
         }}
       >
-        {(todo.isTopLevelItem || listOrigin === "active") && (
+        {(task.isTopLevel || listOrigin === "active") && (
           <Tooltip
             title="Delete task permanently"
             placement="right-start"
             TransitionComponent={Fade}
             TransitionProps={{ timeout: 1000 }}
           >
-            <MenuItem onClick={() => handleDelete(todo.id)}>
+            <MenuItem onClick={() => handleDelete(task.id)}>
               <DeleteForeverIcon sx={{ fontSize: "20px", marginRight: 1 }} />
               <Typography variant="body2">Delete</Typography>
             </MenuItem>
           </Tooltip>
         )}
-        {!todo.isTopLevelItem && listOrigin === "active" && (
+        {!task.isTopLevel && listOrigin === "active" && (
           <Tooltip
             title="Move out of sub tasks"
             placement="right-start"
             TransitionComponent={Fade}
             TransitionProps={{ timeout: 1000 }}
           >
-            <MenuItem onClick={() => handleUnappend(todo.id)}>
+            <MenuItem onClick={() => handleUnappend(task.id)}>
               <SubdirectoryArrowLeftIcon
                 sx={{ fontSize: "20px", marginRight: 1 }}
               />

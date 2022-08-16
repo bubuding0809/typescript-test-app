@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { Todo } from "../utils/types";
+import { TaskType, Todo } from "../utils/types";
 import { Chip, Typography } from "@mui/material";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -9,10 +9,10 @@ import { TodoTaskMenu } from "./TodoTaskMenu";
 import { BpCheckBox } from "./custom/BpCheckBox";
 
 interface TodoTaskProps {
-  todo: Todo;
+  task: TaskType;
   listOrigin: string;
   provided: DraggableProvided;
-  snapshot: DraggableStateSnapshot | undefined;
+  snapshot?: DraggableStateSnapshot;
   handleToggle: React.ChangeEventHandler<HTMLInputElement>;
   handleDelete: any;
   handleRemoveDateTime: any;
@@ -20,7 +20,7 @@ interface TodoTaskProps {
 }
 
 export const TodoTask: React.FC<TodoTaskProps> = ({
-  todo,
+  task,
   listOrigin,
   snapshot,
   handleToggle,
@@ -76,23 +76,23 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
         <div className="flex justify-start items-start gap-1">
           <BpCheckBox
             className="self-start"
-            name={todo.id}
-            checked={todo.isChecked}
+            name={task.id}
+            checked={task.isCompleted}
             onChange={handleToggle}
           />
           <Typography
             sx={{
-              textDecoration: todo.isChecked ? "line-through" : "",
+              textDecoration: task.isCompleted ? "line-through" : "",
               width: "100%",
             }}
           >
-            {todo.message}
+            {task.title}
           </Typography>
           {isHover && (
             <div className="absolute -right-0.5 top-0.5">
               <TodoTaskMenu
                 handleUnappend={handleUnappendSubtask}
-                todo={todo}
+                task={task}
                 listOrigin={listOrigin}
                 handleDelete={handleDelete}
               />
@@ -102,7 +102,7 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
 
         {/* Task details: description, time, etc... */}
         <div ref={parent} className="flex flex-col gap-1 ml-6 items-start">
-          {todo.description && (
+          {task.description && (
             <div className="flex gap-1">
               <DescriptionIcon
                 sx={{
@@ -116,12 +116,12 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
                 variant="body2"
                 color="textSecondary"
               >
-                {todo.description}
+                {task.description}
               </Typography>
               {/* Show delete button on hover */}
             </div>
           )}
-          {todo.date && (
+          {task.date && (
             <Chip
               sx={{
                 color: "text.secondary",
@@ -129,10 +129,12 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
               }}
               variant="outlined"
               size="small"
-              label={`${formateDate(todo.date)}, ${todo.time && todo.time}`}
+              label={`${formateDate(task.date)}, ${task.time && task.time}`}
               icon={<CalendarMonthIcon />}
               onDelete={
-                todo.isChecked ? undefined : () => handleRemoveDateTime(todo.id)
+                task.isCompleted
+                  ? undefined
+                  : () => handleRemoveDateTime(task.id)
               }
             />
           )}

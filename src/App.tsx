@@ -1,5 +1,5 @@
 import "./App.css";
-import Main from "./components/Main";
+import BoardView from "./components/BoardView";
 import { Typography } from "@mui/material";
 import { Box } from "@mui/system";
 
@@ -25,7 +25,7 @@ function App() {
           TaskMate
         </Typography>
       </header>
-      <Main />
+      <BoardView />
       <footer
         className="
         flex flex-col justify-center items-center

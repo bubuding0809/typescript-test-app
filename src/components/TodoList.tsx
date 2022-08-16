@@ -1,33 +1,23 @@
 import autoAnimate from "@formkit/auto-animate";
 import { useRef, useEffect } from "react";
 import { Droppable, Draggable } from "react-beautiful-dnd";
-import { Todo } from "../utils/types";
+import { BoardType, PanelType, Todo } from "../utils/types";
 import { TodoItem } from "./TodoItem";
 import { TransitionGroup } from "react-transition-group";
 import { Collapse } from "@mui/material";
 
 interface TodoListProps {
-  isCombineEnabled: boolean;
+  boardData: BoardType;
+  panelData: PanelType;
+  todoList: string[];
   droppableId: string;
-  isDragActive: boolean;
-  todoList: Todo[];
-  handleToggle: React.ChangeEventHandler<HTMLInputElement>;
-  handleToggleSubtask: React.ChangeEventHandler<HTMLInputElement>;
-  handleDelete: any;
-  handleRemoveDateTime: any;
-  handleUnappendSubtask: any;
 }
 
 export const TodoList: React.FC<TodoListProps> = ({
-  isCombineEnabled,
-  droppableId,
-  isDragActive,
+  boardData,
+  panelData,
   todoList,
-  handleToggle,
-  handleToggleSubtask,
-  handleDelete,
-  handleRemoveDateTime,
-  handleUnappendSubtask,
+  droppableId,
 }: TodoListProps) => {
   // Set up autoAnimation of div element
   const parent = useRef<HTMLDivElement>(null);
@@ -36,43 +26,34 @@ export const TodoList: React.FC<TodoListProps> = ({
     parent.current && autoAnimate(parent.current);
   }, [parent]);
 
-  // Change bg color of list when drag is active
-  const bgColor = () =>
-    isDragActive ? "transition ease delay-200 bg-[#F0F7EC]/80" : "";
-
   return (
-    <Droppable
-      droppableId={droppableId}
-      type={droppableId + "-main"}
-      isCombineEnabled={isCombineEnabled}
-    >
+    <Droppable droppableId={droppableId} type={droppableId + "-main"}>
       {(provided, snapshot) => (
         <div
           className={`m-2 rounded 
-            ${
-              snapshot.isDraggingOver
-                ? "transition ease-in delay-200 bg-[#F0F7EC] shadow-inner"
-                : bgColor()
-            }
+          ${
+            snapshot.isDraggingOver
+              ? "transition duration-200 delay-100 ease-in bg-[#F0F7EC] shadow-inner"
+              : "transition duration-300 delay-150 ease-out"
+          }
+
           `}
           ref={provided.innerRef}
           {...provided.droppableProps}
         >
           <TransitionGroup className="flex flex-col gap-1.5">
             {todoList.length ? (
-              todoList.map((todo, index) => (
-                <Collapse key={todo.id}>
-                  <Draggable draggableId={todo.id} index={index}>
-                    {provided => (
+              todoList.map((taskId, index) => (
+                <Collapse key={taskId}>
+                  <Draggable draggableId={taskId} index={index}>
+                    {(provided, snapshot) => (
                       <TodoItem
+                        task={boardData.todoTasks[taskId]}
+                        boardData={boardData}
+                        panelData={panelData}
                         provided={provided}
-                        todo={todo}
+                        snapshot={snapshot}
                         listOrigin={droppableId}
-                        handleToggle={handleToggle}
-                        handleToggleSubtask={handleToggleSubtask}
-                        handleDelete={handleDelete}
-                        handleRemoveDateTime={handleRemoveDateTime}
-                        handleUnappendSubtask={handleUnappendSubtask}
                       />
                     )}
                   </Draggable>
