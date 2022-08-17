@@ -2,10 +2,17 @@ import { TaskType, BoardType, PanelType } from "../utils/types";
 import { getLocalStorage, setLocalStorage } from "../utils/useLocalStorage";
 import React, { ChangeEventHandler, useEffect, useState, useRef } from "react";
 import autoAnimate from "@formkit/auto-animate";
-import { DragDropContext, DropResult, DragStart } from "react-beautiful-dnd";
+import {
+  DragDropContext,
+  DropResult,
+  DragStart,
+  DraggableProvidedDragHandleProps,
+  DraggableProvided,
+} from "react-beautiful-dnd";
 import { TodoPanelDivider } from "./TodoPanelDivider";
 import { TodoList } from "./TodoList";
-import { Save } from "@mui/icons-material";
+import { Save, MoreHoriz } from "@mui/icons-material";
+import { PanelMenu } from "./PanelMenu";
 import {
   Typography,
   Paper,
@@ -14,20 +21,18 @@ import {
   InputAdornment,
   IconButton,
   Tooltip,
+  Button,
 } from "@mui/material";
 
 interface TodoListProps {
+  provided: DraggableProvided;
   panelData: PanelType;
   boardData: BoardType;
   setBoardData: React.Dispatch<React.SetStateAction<BoardType>>;
   activeList: string[];
   completedList: string[];
-  isPanelNew: { [key: string]: boolean };
-  setIsPanelNew: React.Dispatch<
-    React.SetStateAction<{
-      [key: string]: boolean;
-    }>
-  >;
+  newPanel: string;
+  setNewPanel: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const StyledTextField = styled(TextField)({
@@ -55,13 +60,14 @@ const StyledTextField = styled(TextField)({
 });
 
 export const TodoMain: React.FC<TodoListProps> = ({
+  provided,
   panelData,
   boardData,
   setBoardData,
   activeList,
   completedList,
-  isPanelNew,
-  setIsPanelNew,
+  newPanel,
+  setNewPanel,
 }: TodoListProps) => {
   // Set up autoAnimation of ul element
   const parent = useRef<HTMLDivElement>(null);
@@ -70,7 +76,7 @@ export const TodoMain: React.FC<TodoListProps> = ({
   }, [parent]);
 
   const [isEditPanelTitle, setIsEditPanelTitle] = useState(
-    isPanelNew[panelData.id] ? true : false
+    panelData.id === newPanel
   );
 
   const [panelTitle, setPanelTitle] = useState<string>(panelData.title);
@@ -87,7 +93,7 @@ export const TodoMain: React.FC<TodoListProps> = ({
       return;
     }
 
-    setBoardData((prevState) => ({
+    setBoardData(prevState => ({
       ...prevState,
       panels: {
         ...prevState.panels,
@@ -98,17 +104,31 @@ export const TodoMain: React.FC<TodoListProps> = ({
       },
     }));
 
+    // set panel edit state to false
     setIsEditPanelTitle(false);
-    setIsPanelNew((prevState) => ({
-      ...prevState,
-      [panelData.id]: false,
-    }));
+
+    // clear the new panel state
+    setNewPanel("");
   };
 
   const handleReveal: React.ChangeEventHandler<HTMLInputElement> = () => {
-    setIsReveal((prevState) => {
+    setIsReveal(prevState => {
       setLocalStorage("isReveal", !prevState);
       return !prevState;
+    });
+  };
+
+  const handleDeletePanel = (panelId: string) => {
+    setBoardData(prevState => {
+      // remove panel from board
+      const newPanels = { ...prevState.panels };
+      delete newPanels[panelId];
+
+      return {
+        ...prevState,
+        panels: newPanels,
+        panelOrder: prevState.panelOrder.filter(id => id !== panelId),
+      };
     });
   };
 
@@ -123,7 +143,10 @@ export const TodoMain: React.FC<TodoListProps> = ({
       elevation={3}
     >
       {/* Panel header */}
-      <div className="flex px-3 pt-2 rounded-t">
+      <div
+        {...provided.dragHandleProps}
+        className="flex items-center justify-between pl-3 pr-2 pt-2 rounded-t"
+      >
         {!isEditPanelTitle ? (
           <Tooltip title="Double-click to edit" placement="right-start">
             <Typography
@@ -144,7 +167,8 @@ export const TodoMain: React.FC<TodoListProps> = ({
               type="text"
               fullWidth
               value={panelTitle}
-              onChange={(e) => setPanelTitle(e.target.value)}
+              onChange={e => setPanelTitle(e.target.value)}
+              onFocus={e => e.target.select()}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
@@ -161,6 +185,11 @@ export const TodoMain: React.FC<TodoListProps> = ({
             />
           </form>
         )}
+        <PanelMenu
+          panelData={panelData}
+          boardData={boardData}
+          handleDelete={handleDeletePanel}
+        />
       </div>
 
       {/* Panel body */}

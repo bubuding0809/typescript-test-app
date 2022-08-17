@@ -1,28 +1,31 @@
-import React, { FormEventHandler, useState } from "react";
+import React, { CSSProperties, FormEventHandler, useState } from "react";
 import { nanoid } from "nanoid";
 import { Entry, BoardType } from "../utils/types";
 import { TodoEntryForm } from "./TodoEntryForm";
 import { TodoMain } from "./TodoMain";
 import { PanelType } from "../utils/types";
+import { DraggableProvided, DraggableStateSnapshot } from "react-beautiful-dnd";
 
 interface PanelProps {
+  style: CSSProperties;
+  provided: DraggableProvided;
+  snapshot: DraggableStateSnapshot;
   panelData: PanelType;
   boardData: BoardType;
   setBoardData: React.Dispatch<React.SetStateAction<BoardType>>;
-  isPanelNew: { [key: string]: boolean };
-  setIsPanelNew: React.Dispatch<
-    React.SetStateAction<{
-      [key: string]: boolean;
-    }>
-  >;
+  newPanel: string;
+  setNewPanel: React.Dispatch<React.SetStateAction<string>>;
 }
 
 const Panel = ({
+  style,
+  provided,
+  snapshot,
   panelData,
   boardData,
   setBoardData,
-  isPanelNew,
-  setIsPanelNew,
+  newPanel,
+  setNewPanel,
 }: PanelProps): JSX.Element => {
   const {
     id: panelId,
@@ -51,7 +54,7 @@ const Panel = ({
 
     // Update active list with new item
     const newTaskId = nanoid();
-    setBoardData((prevState) => ({
+    setBoardData(prevState => ({
       ...prevState,
       todoTasks: {
         ...prevState.todoTasks,
@@ -83,8 +86,15 @@ const Panel = ({
     });
   };
 
+  const onDragStyle = snapshot.isDragging ? "" : "";
+
   return (
-    <div className="flex flex-col gap-2 min-w-sm max-w-sm">
+    <div
+      ref={provided.innerRef}
+      {...provided.draggableProps}
+      style={style}
+      className={`flex flex-col gap-2 min-w-sm w-80 max-w-sm ${onDragStyle}`}
+    >
       {/* Task Entry form */}
       <TodoEntryForm
         handleNewEntry={handleNewEntry}
@@ -94,13 +104,14 @@ const Panel = ({
 
       {/* Task list */}
       <TodoMain
+        provided={provided}
         panelData={panelData}
         boardData={boardData}
         setBoardData={setBoardData}
         activeList={activeList}
         completedList={completedList}
-        isPanelNew={isPanelNew}
-        setIsPanelNew={setIsPanelNew}
+        newPanel={newPanel}
+        setNewPanel={setNewPanel}
       />
     </div>
   );
