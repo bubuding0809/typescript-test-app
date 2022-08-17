@@ -22,6 +22,12 @@ interface TodoListProps {
   setBoardData: React.Dispatch<React.SetStateAction<BoardType>>;
   activeList: string[];
   completedList: string[];
+  isPanelNew: { [key: string]: boolean };
+  setIsPanelNew: React.Dispatch<
+    React.SetStateAction<{
+      [key: string]: boolean;
+    }>
+  >;
 }
 
 const StyledTextField = styled(TextField)({
@@ -54,6 +60,8 @@ export const TodoMain: React.FC<TodoListProps> = ({
   setBoardData,
   activeList,
   completedList,
+  isPanelNew,
+  setIsPanelNew,
 }: TodoListProps) => {
   // Set up autoAnimation of ul element
   const parent = useRef<HTMLDivElement>(null);
@@ -61,11 +69,11 @@ export const TodoMain: React.FC<TodoListProps> = ({
     parent.current && autoAnimate(parent.current);
   }, [parent]);
 
-  const [isEditPanelTitle, setIsEditPanelTitle] = useState(false);
-
-  const [panelTitle, setPanelTitle] = useState<string>(
-    getLocalStorage("panelTitle", "Todo panel")
+  const [isEditPanelTitle, setIsEditPanelTitle] = useState(
+    isPanelNew[panelData.id] ? true : false
   );
+
+  const [panelTitle, setPanelTitle] = useState<string>(panelData.title);
 
   const [isReveal, setIsReveal] = useState<boolean>(
     getLocalStorage("isReveal", false)
@@ -79,7 +87,7 @@ export const TodoMain: React.FC<TodoListProps> = ({
       return;
     }
 
-    setBoardData(prevState => ({
+    setBoardData((prevState) => ({
       ...prevState,
       panels: {
         ...prevState.panels,
@@ -91,10 +99,14 @@ export const TodoMain: React.FC<TodoListProps> = ({
     }));
 
     setIsEditPanelTitle(false);
+    setIsPanelNew((prevState) => ({
+      ...prevState,
+      [panelData.id]: false,
+    }));
   };
 
   const handleReveal: React.ChangeEventHandler<HTMLInputElement> = () => {
-    setIsReveal(prevState => {
+    setIsReveal((prevState) => {
       setLocalStorage("isReveal", !prevState);
       return !prevState;
     });
@@ -132,7 +144,7 @@ export const TodoMain: React.FC<TodoListProps> = ({
               type="text"
               fullWidth
               value={panelTitle}
-              onChange={e => setPanelTitle(e.target.value)}
+              onChange={(e) => setPanelTitle(e.target.value)}
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">

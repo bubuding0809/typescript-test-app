@@ -18,6 +18,8 @@ const BoardView = () => {
     getLocalStorage("boardData", emptyBoardData)
   );
 
+  const [isPanelNew, setIsPanelNew] = useState<{ [key: string]: boolean }>({});
+
   useEffect(() => {
     setLocalStorage("boardData", boardData);
     console.log(boardData);
@@ -26,7 +28,7 @@ const BoardView = () => {
   const handleCreateNewPanel = () => {
     // Create new panel and update state
     const newPanelId = nanoid();
-    setBoardData(prevState => ({
+    setBoardData((prevState) => ({
       ...prevState,
       panels: {
         ...prevState.panels,
@@ -39,6 +41,11 @@ const BoardView = () => {
       },
       panelOrder: [...prevState.panelOrder, newPanelId],
     }));
+
+    setIsPanelNew((prevState) => ({
+      ...prevState,
+      [newPanelId]: true,
+    }));
   };
 
   return (
@@ -48,8 +55,8 @@ const BoardView = () => {
       bg-green-image bg-cover overflow-auto
     "
     >
-      <DragDropContext onDragEnd={result => console.log(result)}>
-        {boardData.panelOrder.map(panelId => {
+      <DragDropContext onDragEnd={(result) => console.log(result)}>
+        {boardData.panelOrder.map((panelId) => {
           const panelData = boardData.panels[panelId];
           return (
             <Panel
@@ -57,6 +64,8 @@ const BoardView = () => {
               panelData={panelData}
               boardData={boardData}
               setBoardData={setBoardData}
+              isPanelNew={isPanelNew}
+              setIsPanelNew={setIsPanelNew}
             />
           );
         })}

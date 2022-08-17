@@ -1,28 +1,28 @@
-import React, {
-  FormEventHandler,
-  useState,
-  useEffect,
-  ReactElement,
-} from "react";
+import React, { FormEventHandler, useState } from "react";
 import { nanoid } from "nanoid";
-import { Todo, Entry, BoardType } from "../utils/types";
-import { getLocalStorage, setLocalStorage } from "../utils/useLocalStorage";
+import { Entry, BoardType } from "../utils/types";
 import { TodoEntryForm } from "./TodoEntryForm";
 import { TodoMain } from "./TodoMain";
-import Confetti from "react-confetti";
-import { useWindowSize } from "@react-hook/window-size";
 import { PanelType } from "../utils/types";
 
 interface PanelProps {
   panelData: PanelType;
   boardData: BoardType;
   setBoardData: React.Dispatch<React.SetStateAction<BoardType>>;
+  isPanelNew: { [key: string]: boolean };
+  setIsPanelNew: React.Dispatch<
+    React.SetStateAction<{
+      [key: string]: boolean;
+    }>
+  >;
 }
 
 const Panel = ({
   panelData,
   boardData,
   setBoardData,
+  isPanelNew,
+  setIsPanelNew,
 }: PanelProps): JSX.Element => {
   const {
     id: panelId,
@@ -51,7 +51,7 @@ const Panel = ({
 
     // Update active list with new item
     const newTaskId = nanoid();
-    setBoardData(prevState => ({
+    setBoardData((prevState) => ({
       ...prevState,
       todoTasks: {
         ...prevState.todoTasks,
@@ -99,6 +99,8 @@ const Panel = ({
         setBoardData={setBoardData}
         activeList={activeList}
         completedList={completedList}
+        isPanelNew={isPanelNew}
+        setIsPanelNew={setIsPanelNew}
       />
     </div>
   );
