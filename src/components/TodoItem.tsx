@@ -16,32 +16,37 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 interface TodoItemProps {
+  task: TaskType;
   boardData: BoardType;
   panelData: PanelType;
-  task: TaskType;
   provided: DraggableProvided;
   snapshot: DraggableStateSnapshot;
-  listOrigin: string;
+  style: React.CSSProperties;
+  handleDeleteTask: (taskId: string, panelId: string) => void;
+  handleUnappendSubtask: (taskId: string, panelId: string) => void;
+  handleToggleTask: (taskId: string, panelId: string) => void;
 }
 
 export const TodoItem: React.FC<TodoItemProps> = ({
+  task,
   boardData,
   panelData,
-  task,
   provided,
   snapshot,
-  listOrigin,
+  style,
+  handleDeleteTask,
+  handleUnappendSubtask,
+  handleToggleTask,
 }: TodoItemProps) => {
   const [isRevealSubtasks, setIsRevealSubtasks] = useState(false);
 
   const parent = useRef(null);
-
   useEffect(() => {
     parent.current && autoAnimate(parent.current);
   }, [parent, isRevealSubtasks]);
 
   const nestListPreviewStyle = () => {
-    if (listOrigin === "active") {
+    if (panelData.active.includes(task.id)) {
       return "bg-gradient-to-br from-emerald-100/50 to-gray-100";
     }
     return "bg-gradient-to-br from-gray-100/50 to-slate-200/50";
@@ -75,15 +80,17 @@ export const TodoItem: React.FC<TodoItemProps> = ({
             : "border"
         }
       `}
+      style={style}
     >
       <TodoTask
         task={task}
+        panelData={panelData}
+        boardData={boardData}
         provided={provided}
-        listOrigin={listOrigin}
-        handleToggle={() => {}}
-        handleDelete={() => {}}
+        handleToggle={handleToggleTask}
+        handleDelete={handleDeleteTask}
         handleRemoveDateTime={() => {}}
-        handleUnappendSubtask={() => {}}
+        handleUnappendSubtask={handleUnappendSubtask}
       />
 
       {/* sub tasks */}
@@ -123,7 +130,6 @@ export const TodoItem: React.FC<TodoItemProps> = ({
                         <Draggable
                           draggableId={boardData.todoTasks[subtask].id}
                           index={index}
-                          isDragDisabled={listOrigin !== "active"}
                         >
                           {(provided, snapshot) => (
                             <div
@@ -140,14 +146,15 @@ export const TodoItem: React.FC<TodoItemProps> = ({
                                 />
                               )}
                               <TodoTask
-                                task={task}
-                                listOrigin={listOrigin}
+                                task={boardData.todoTasks[subtask]}
+                                panelData={panelData}
+                                boardData={boardData}
                                 provided={provided}
                                 snapshot={snapshot}
-                                handleToggle={() => {}}
-                                handleDelete={() => {}}
+                                handleToggle={handleToggleTask}
+                                handleDelete={handleDeleteTask}
                                 handleRemoveDateTime={() => {}}
-                                handleUnappendSubtask={() => {}}
+                                handleUnappendSubtask={handleUnappendSubtask}
                               />
                             </div>
                           )}

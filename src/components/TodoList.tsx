@@ -1,23 +1,32 @@
 import autoAnimate from "@formkit/auto-animate";
-import { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { Droppable, Draggable } from "react-beautiful-dnd";
 import { BoardType, PanelType, Todo } from "../utils/types";
 import { TodoItem } from "./TodoItem";
 import { TransitionGroup } from "react-transition-group";
 import { Collapse } from "@mui/material";
+import NaturalDragAnimation from "natural-drag-animation-rbdnd";
 
 interface TodoListProps {
+  type: "active" | "completed";
   boardData: BoardType;
   panelData: PanelType;
   todoList: string[];
-  droppableId: string;
+  isItemCombineEnabled: boolean;
+  handleDeleteTask: (taskId: string, panelId: string) => void;
+  handleUnappendSubtask: (taskId: string, panelId: string) => void;
+  handleToggleTask: (taskId: string, panelId: string) => void;
 }
 
 export const TodoList: React.FC<TodoListProps> = ({
+  type,
   boardData,
   panelData,
   todoList,
-  droppableId,
+  isItemCombineEnabled,
+  handleDeleteTask,
+  handleUnappendSubtask,
+  handleToggleTask,
 }: TodoListProps) => {
   // Set up autoAnimation of div element
   const parent = useRef<HTMLDivElement>(null);
@@ -27,49 +36,75 @@ export const TodoList: React.FC<TodoListProps> = ({
   }, [parent]);
 
   return (
-    <Droppable droppableId={droppableId} type={droppableId + "-main"}>
-      {(provided, snapshot) => (
-        <div
-          className={`m-2 rounded 
-          ${
-            snapshot.isDraggingOver
-              ? "transition duration-200 delay-100 ease-in bg-[#F0F7EC] shadow-inner"
-              : "transition duration-300 delay-150 ease-out"
+    <Droppable
+      droppableId={`${panelData.id}-${type}`}
+      type={`panel-${type}`}
+      isCombineEnabled={isItemCombineEnabled}
+    >
+      {(provided, snapshot) => {
+        const { isDraggingOver, draggingFromThisWith, draggingOverWith } =
+          snapshot;
+        const taskListStyle = () => {
+          if (isDraggingOver) {
+            return "bg-[#F0F7EC] shadow-inner";
+          } else if (
+            !draggingOverWith &&
+            panelData.active.includes(draggingFromThisWith!)
+          ) {
+            return "bg-[#eefffd] shadow-inner";
           }
+        };
 
-          `}
-          ref={provided.innerRef}
-          {...provided.droppableProps}
-        >
-          <TransitionGroup className="flex flex-col gap-1.5">
-            {todoList.length ? (
-              todoList.map((taskId, index) => (
-                <Collapse key={taskId}>
-                  <Draggable draggableId={taskId} index={index}>
-                    {(provided, snapshot) => (
-                      <TodoItem
-                        task={boardData.todoTasks[taskId]}
-                        boardData={boardData}
-                        panelData={panelData}
-                        provided={provided}
-                        snapshot={snapshot}
-                        listOrigin={droppableId}
-                      />
-                    )}
-                  </Draggable>
+        return (
+          <div
+            className={`m-2 rounded transition-all duration-200 delay-100 ease-in-out
+              ${taskListStyle()}
+            `}
+            ref={provided.innerRef}
+            {...provided.droppableProps}
+          >
+            <TransitionGroup className="flex flex-col gap-1.5">
+              {todoList.length ? (
+                todoList.map((taskId, index) => (
+                  <Collapse key={taskId} timeout={100}>
+                    <Draggable draggableId={taskId} index={index}>
+                      {(provided, snapshot) => (
+                        <NaturalDragAnimation
+                          style={provided.draggableProps.style}
+                          snapshot={snapshot}
+                          rotationMultiplier={0.5}
+                          rotationFade={0.5}
+                        >
+                          {(style: React.CSSProperties) => (
+                            <TodoItem
+                              task={boardData.todoTasks[taskId]}
+                              style={style}
+                              boardData={boardData}
+                              panelData={panelData}
+                              provided={provided}
+                              snapshot={snapshot}
+                              handleDeleteTask={handleDeleteTask}
+                              handleUnappendSubtask={handleUnappendSubtask}
+                              handleToggleTask={handleToggleTask}
+                            />
+                          )}
+                        </NaturalDragAnimation>
+                      )}
+                    </Draggable>
+                  </Collapse>
+                ))
+              ) : (
+                <Collapse>
+                  <div className="py-2 text-center">
+                    <p>No tasks</p>
+                  </div>
                 </Collapse>
-              ))
-            ) : (
-              <Collapse>
-                <div className="py-2 text-center">
-                  <p>Nothing {droppableId}</p>
-                </div>
-              </Collapse>
-            )}
-          </TransitionGroup>
-          {provided.placeholder}
-        </div>
-      )}
+              )}
+            </TransitionGroup>
+            {provided.placeholder}
+          </div>
+        );
+      }}
     </Droppable>
   );
 };

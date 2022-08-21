@@ -1,4 +1,9 @@
-import React, { CSSProperties, FormEventHandler, useState } from "react";
+import React, {
+  CSSProperties,
+  FormEventHandler,
+  useEffect,
+  useState,
+} from "react";
 import { nanoid } from "nanoid";
 import { Entry, BoardType } from "../utils/types";
 import { TodoEntryForm } from "./TodoEntryForm";
@@ -15,6 +20,11 @@ interface PanelProps {
   setBoardData: React.Dispatch<React.SetStateAction<BoardType>>;
   newPanel: string;
   setNewPanel: React.Dispatch<React.SetStateAction<string>>;
+  isItemCombineEnabled: boolean;
+  handleDeletePanel: (panelId: string) => void;
+  handleDeleteTask: (taskId: string, panelId: string) => void;
+  handleUnappendSubtask: (taskId: string, panelId: string) => void;
+  handleToggleTask: (taskId: string, panelId: string) => void;
 }
 
 const Panel = ({
@@ -26,18 +36,31 @@ const Panel = ({
   setBoardData,
   newPanel,
   setNewPanel,
+  isItemCombineEnabled,
+  handleDeletePanel,
+  handleDeleteTask,
+  handleUnappendSubtask,
+  handleToggleTask,
 }: PanelProps): JSX.Element => {
-  const {
-    id: panelId,
-    active: activeList,
-    completed: completedList,
-  } = panelData;
+  const { active: activeList, completed: completedList } = panelData;
 
   const [newEntry, setNewEntry] = useState<Entry>({
     todoMessage: "",
     todoDateTime: null,
     todoDescription: "",
   });
+
+  const [isAnimateEnter, setIsAnimateEnter] = useState(false);
+
+  useEffect(() => {
+    setIsAnimateEnter(true);
+
+    const timeout = setTimeout(() => {
+      setIsAnimateEnter(false);
+    }, 1000);
+
+    return () => clearTimeout(timeout);
+  }, []);
 
   //handle new todo entry
   const handleNewEntry: FormEventHandler<HTMLFormElement> = (
@@ -60,13 +83,13 @@ const Panel = ({
         ...prevState.todoTasks,
         [newTaskId]: {
           id: newTaskId,
+          parent: null,
           title: todoMessage.trim(),
           date: todoDateTime ? todoDateTime.format("YYYY-MM-DD") : "",
           time: todoDateTime ? todoDateTime.format("h:mm a") : "",
           description: todoDescription ? todoDescription.trim() : "",
           subtasks: [],
           isCompleted: false,
-          isTopLevel: true,
         },
       },
       panels: {
@@ -86,14 +109,14 @@ const Panel = ({
     });
   };
 
-  const onDragStyle = snapshot.isDragging ? "" : "";
-
   return (
     <div
       ref={provided.innerRef}
       {...provided.draggableProps}
       style={style}
-      className={`flex flex-col gap-2 min-w-sm w-80 max-w-sm ${onDragStyle}`}
+      className={`flex flex-col gap-2 min-w-sm w-80 max-w-sm animate__animated ${
+        isAnimateEnter ? "animate__bounceInDown animate__faster" : ""
+      }`}
     >
       {/* Task Entry form */}
       <TodoEntryForm
@@ -105,13 +128,19 @@ const Panel = ({
       {/* Task list */}
       <TodoMain
         provided={provided}
+        snapshot={snapshot}
         panelData={panelData}
         boardData={boardData}
         setBoardData={setBoardData}
         activeList={activeList}
         completedList={completedList}
         newPanel={newPanel}
+        isItemCombineEnabled={isItemCombineEnabled}
         setNewPanel={setNewPanel}
+        handleDeletePanel={handleDeletePanel}
+        handleDeleteTask={handleDeleteTask}
+        handleUnappendSubtask={handleUnappendSubtask}
+        handleToggleTask={handleToggleTask}
       />
     </div>
   );

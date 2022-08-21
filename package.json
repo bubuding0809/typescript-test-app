@@ -18,6 +18,7 @@
     "@types/react": "^18.0.15",
     "@types/react-beautiful-dnd": "^13.1.2",
     "@types/react-dom": "^18.0.6",
+    "animate.css": "^4.1.1",
     "moment": "^2.29.4",
     "nanoid": "^4.0.0",
     "natural-drag-animation-rbdnd": "^2.1.0",

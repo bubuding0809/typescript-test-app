@@ -8,6 +8,7 @@ import { getLocalStorage, setLocalStorage } from "../utils/useLocalStorage";
 import {
   DragDropContext,
   Draggable,
+  DragStart,
   Droppable,
   DropResult,
 } from "react-beautiful-dnd";
@@ -24,8 +25,8 @@ const BoardView = () => {
   const [boardData, setBoardData] = useState<BoardType>(
     getLocalStorage("boardData", emptyBoardData)
   );
-
-  const [newPanel, setNewPanel] = useState<string>("");
+  const [newPanel, setNewPanel] = useState("");
+  const [isItemCombineEnabled, setIsItemCombineEnabled] = useState(false);
 
   useEffect(() => {
     setLocalStorage("boardData", boardData);
@@ -40,7 +41,7 @@ const BoardView = () => {
         ...prevState.panels,
         [newPanelId]: {
           id: newPanelId,
-          title: "New panel",
+          title: "Untitled",
           active: [],
           completed: [],
         },
@@ -51,8 +52,81 @@ const BoardView = () => {
     setNewPanel(newPanelId);
   };
 
+  const handleDeletePanel = (panelId: string) => {
+    setBoardData(prevState => {
+      const newTodoTasks = { ...prevState.todoTasks };
+      const newPanels = { ...prevState.panels };
+
+      // Delete all tasks and subtasks in panel
+      [...newPanels[panelId].active, ...newPanels[panelId].completed].forEach(
+        taskId => {
+          newTodoTasks[taskId].subtasks.forEach(subtaskId => {
+            delete newTodoTasks[subtaskId];
+          });
+          delete newTodoTasks[taskId];
+        }
+      );
+
+      // remove panel from board
+      delete newPanels[panelId];
+
+      return {
+        ...prevState,
+        todoTasks: newTodoTasks,
+        panels: newPanels,
+        panelOrder: prevState.panelOrder.filter(id => id !== panelId),
+      };
+    });
+  };
+
+  const handleDragStart = (initial: DragStart) => {
+    const { draggableId, source, type } = initial;
+
+    if (type === "panel-active") {
+      if (boardData.todoTasks[draggableId].subtasks.length === 0) {
+        setIsItemCombineEnabled(true);
+      } else {
+        setIsItemCombineEnabled(false);
+      }
+      return;
+    }
+
+    if (type === "panel-completed") {
+      setIsItemCombineEnabled(false);
+      return;
+    }
+  };
+
   const handleDragEnd = (result: DropResult) => {
-    const { draggableId, destination, source, type } = result;
+    const { draggableId, destination, source, type, combine } = result;
+
+    // If it is a combine drag, add source draggable to destination draggable subtasks
+    if (combine) {
+      const newPanels = { ...boardData.panels };
+
+      // splice out source draggable from source panel
+      const [newSubtaskId] = newPanels[
+        source.droppableId.replace("-active", "")
+      ].active.splice(source.index, 1);
+
+      setBoardData(prevState => ({
+        ...prevState,
+        todoTasks: {
+          ...prevState.todoTasks,
+          [combine.draggableId]: {
+            ...prevState.todoTasks[combine.draggableId],
+            subtasks: [
+              ...prevState.todoTasks[combine.draggableId].subtasks,
+              newSubtaskId,
+            ],
+          },
+          [newSubtaskId]: {
+            ...prevState.todoTasks[newSubtaskId],
+            parent: combine.draggableId,
+          },
+        },
+      }));
+    }
 
     // If draggable is dropped on a invlaid location, return
     if (!destination) {
@@ -83,7 +157,252 @@ const BoardView = () => {
           panelOrder: newPanelOrder,
         };
       });
+      return;
     }
+
+    // If draggable is from a panel, update the panel state
+    if (type === "panel-active") {
+      // create new panel state
+      const newPanels = { ...boardData.panels };
+
+      // splice the dragged item from the source panel task array
+      newPanels[source.droppableId.replace("-active", "")].active.splice(
+        source.index,
+        1
+      );
+
+      // splice the dragged item into the destination panel task array
+      newPanels[destination.droppableId.replace("-active", "")].active.splice(
+        destination.index,
+        0,
+        draggableId
+      );
+
+      // update the board panels state
+      setBoardData(prevState => ({
+        ...prevState,
+        panels: newPanels,
+      }));
+      return;
+    }
+
+    // Handle drag drop of subtasks in active panels
+    if (type === "active-subtask") {
+      console.table(result);
+
+      setBoardData(prevState => {
+        const newTodoTasks = { ...prevState.todoTasks };
+
+        // Remove the subtask from the parent task
+        newTodoTasks[source.droppableId].subtasks.splice(source.index, 1);
+
+        // Add the subtask to the destination task
+        newTodoTasks[destination.droppableId].subtasks.splice(
+          destination.index,
+          0,
+          draggableId
+        );
+
+        // Update the subtask parent
+        newTodoTasks[draggableId].parent = destination.droppableId;
+
+        return {
+          ...prevState,
+          todoTasks: newTodoTasks,
+        };
+      });
+    }
+  };
+
+  const taskProps = {
+    handleDeleteTask: (taskId: string, panelId: string) => {
+      const task = boardData.todoTasks[taskId];
+      // If task has no parent, remove entire item from the panel
+      if (!task.parent) {
+        setBoardData(prevState => {
+          const taskIdsforDeletion = [...task.subtasks, task.id];
+          const newTodoTasks = { ...prevState.todoTasks };
+          const newActive = prevState.panels[panelId].active.filter(
+            id => id !== taskId
+          );
+          const newCompleted = prevState.panels[panelId].completed.filter(
+            id => id !== taskId
+          );
+
+          for (const taskId in newTodoTasks) {
+            if (taskIdsforDeletion.includes(taskId)) {
+              delete newTodoTasks[taskId];
+            }
+          }
+
+          return {
+            ...prevState,
+            todoTasks: newTodoTasks,
+            panels: {
+              ...prevState.panels,
+              [panelId]: {
+                ...prevState.panels[panelId],
+                active: newActive,
+                completed: newCompleted,
+              },
+            },
+          };
+        });
+      } else {
+        setBoardData(prevState => {
+          const newTodoTasks = { ...prevState.todoTasks };
+          delete newTodoTasks[taskId];
+
+          return {
+            ...prevState,
+            todoTasks: {
+              ...newTodoTasks,
+              [task.parent!]: {
+                ...prevState.todoTasks[task.parent!],
+                subtasks: newTodoTasks[task.parent!].subtasks.filter(
+                  id => id !== task.id
+                ),
+              },
+            },
+          };
+        });
+      }
+    },
+    handleUnappendSubtask: (taskId: string, panelId: string) => {
+      const parentId = boardData.todoTasks[taskId].parent;
+      const newParentTask = { ...boardData.todoTasks[parentId!] };
+      newParentTask.subtasks.splice(newParentTask.subtasks.indexOf(taskId), 1);
+
+      const newActive = boardData.panels[panelId].active.reduce(
+        (newActive: string[], currTaskId: string) => {
+          if (currTaskId === parentId) {
+            return [...newActive, currTaskId, taskId];
+          }
+          return [...newActive, currTaskId];
+        },
+        []
+      );
+
+      setBoardData(prevState => {
+        return {
+          ...prevState,
+          todoTasks: {
+            ...prevState.todoTasks,
+            [parentId!]: newParentTask,
+            [taskId]: {
+              ...prevState.todoTasks[taskId],
+              parent: null,
+            },
+          },
+          panels: {
+            ...prevState.panels,
+            [panelId]: {
+              ...prevState.panels[panelId],
+              active: newActive,
+            },
+          },
+        };
+      });
+    },
+    handleToggleTask: (taskId: string, panelId: string) => {
+      const { parent, isCompleted } = boardData.todoTasks[taskId];
+
+      // If tasks is a subtask and is completed and parent is also completed
+      // then move the entire item to active and set target to active
+      if (parent && boardData.todoTasks[parent].isCompleted) {
+        setBoardData(prevState => {
+          const newPanel = { ...boardData.panels[panelId] };
+          return {
+            ...prevState,
+            todoTasks: {
+              ...prevState.todoTasks,
+              [parent]: {
+                ...prevState.todoTasks[parent],
+                isCompleted: false,
+              },
+              [taskId]: {
+                ...prevState.todoTasks[taskId],
+                isCompleted: false,
+              },
+            },
+            panels: {
+              ...prevState.panels,
+              [panelId]: {
+                ...prevState.panels[panelId],
+                active: [...newPanel.active, parent],
+                completed: newPanel.completed.filter(id => id !== parent),
+              },
+            },
+          };
+        });
+        return;
+      }
+
+      // If task is a subtask and parent is not completed, just check/uncheck the task
+      if (parent && !boardData.todoTasks[parent].isCompleted) {
+        setBoardData(prevState => ({
+          ...prevState,
+          todoTasks: {
+            ...prevState.todoTasks,
+            [taskId]: {
+              ...prevState.todoTasks[taskId],
+              isCompleted: !prevState.todoTasks[taskId].isCompleted,
+            },
+          },
+        }));
+        return;
+      }
+
+      // If task is top level item and is not completed, move to completed
+      if (!parent && !isCompleted) {
+        setBoardData(prevState => {
+          const newPanel = { ...prevState.panels[panelId] };
+          const newTodoTasks = { ...prevState.todoTasks };
+          newTodoTasks[taskId].subtasks.forEach(subtaskId => {
+            newTodoTasks[subtaskId].isCompleted = true;
+          });
+          newTodoTasks[taskId].isCompleted = true;
+
+          return {
+            ...prevState,
+            todoTasks: newTodoTasks,
+            panels: {
+              ...prevState.panels,
+              [panelId]: {
+                ...prevState.panels[panelId],
+                active: newPanel.active.filter(id => id !== taskId),
+                completed: [...newPanel.completed, taskId],
+              },
+            },
+          };
+        });
+      }
+
+      // If task is top level item and is completed, move to active
+      if (!parent && isCompleted) {
+        setBoardData(prevState => {
+          const newPanel = { ...prevState.panels[panelId] };
+          return {
+            ...prevState,
+            todoTasks: {
+              ...prevState.todoTasks,
+              [taskId]: {
+                ...prevState.todoTasks[taskId],
+                isCompleted: false,
+              },
+            },
+            panels: {
+              ...prevState.panels,
+              [panelId]: {
+                ...prevState.panels[panelId],
+                active: [...newPanel.active, taskId],
+                completed: newPanel.completed.filter(id => id !== taskId),
+              },
+            },
+          };
+        });
+      }
+    },
   };
 
   return (
@@ -91,9 +410,9 @@ const BoardView = () => {
       className="
       flex p-4 h-full items-start gap-3
       bg-green-image bg-cover overflow-auto
-    "
+      "
     >
-      <DragDropContext onDragEnd={handleDragEnd}>
+      <DragDropContext onDragEnd={handleDragEnd} onDragStart={handleDragStart}>
         <Droppable droppableId="board" type="board" direction="horizontal">
           {(provided, snapshot) => {
             const dropZoneStyle = snapshot.isDraggingOver
@@ -102,18 +421,20 @@ const BoardView = () => {
             return (
               <div
                 className={`
-                  h-full rounded-xl ${dropZoneStyle}
-                  transition-all ease-in-out duration-500
-                `}
+                  h-full
+                  `}
                 ref={provided.innerRef}
                 {...provided.droppableProps}
               >
-                <TransitionGroup className="flex gap-4">
+                <TransitionGroup
+                  className={`flex gap-4 pb-2 rounded ${dropZoneStyle}
+                  transition-all ease-in-out duration-500`}
+                >
                   {boardData.panelOrder.map((panelId, index) => (
                     <Collapse
                       key={panelId}
                       orientation="horizontal"
-                      timeout={{ enter: 250, exit: 250 }}
+                      timeout={100}
                     >
                       <Draggable draggableId={panelId} index={index}>
                         {(provided, snapshot) => (
@@ -133,6 +454,9 @@ const BoardView = () => {
                                 setBoardData={setBoardData}
                                 newPanel={newPanel}
                                 setNewPanel={setNewPanel}
+                                handleDeletePanel={handleDeletePanel}
+                                isItemCombineEnabled={isItemCombineEnabled}
+                                {...taskProps}
                               />
                             )}
                           </NaturalDragAnimation>

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from "react";
-import { TaskType, Todo } from "../utils/types";
+import { BoardType, PanelType, TaskType } from "../utils/types";
 import { Chip, Typography } from "@mui/material";
 import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import DescriptionIcon from "@mui/icons-material/Description";
@@ -10,18 +10,20 @@ import { BpCheckBox } from "./custom/BpCheckBox";
 
 interface TodoTaskProps {
   task: TaskType;
-  listOrigin: string;
+  panelData: PanelType;
+  boardData: BoardType;
   provided: DraggableProvided;
   snapshot?: DraggableStateSnapshot;
-  handleToggle: React.ChangeEventHandler<HTMLInputElement>;
-  handleDelete: any;
-  handleRemoveDateTime: any;
-  handleUnappendSubtask: any;
+  handleToggle: (taskId: string, panelId: string) => void;
+  handleDelete: (taskId: string, panelId: string) => void;
+  handleUnappendSubtask: (taskId: string, panelId: string) => void;
+  handleRemoveDateTime: (taskId: string, panelId: string) => void;
 }
 
 export const TodoTask: React.FC<TodoTaskProps> = ({
   task,
-  listOrigin,
+  panelData,
+  boardData,
   snapshot,
   handleToggle,
   handleDelete,
@@ -78,7 +80,7 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
             className="self-start"
             name={task.id}
             checked={task.isCompleted}
-            onChange={handleToggle}
+            onChange={() => handleToggle(task.id, panelData.id)}
           />
           <Typography
             sx={{
@@ -89,11 +91,12 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
             {task.title}
           </Typography>
           {isHover && (
-            <div className="absolute -right-0.5 top-0.5">
+            <div className="absolute -right-0.5 top-0">
               <TodoTaskMenu
-                handleUnappend={handleUnappendSubtask}
                 task={task}
-                listOrigin={listOrigin}
+                panelData={panelData}
+                boardData={boardData}
+                handleUnappend={handleUnappendSubtask}
                 handleDelete={handleDelete}
               />
             </div>
@@ -134,7 +137,7 @@ export const TodoTask: React.FC<TodoTaskProps> = ({
               onDelete={
                 task.isCompleted
                   ? undefined
-                  : () => handleRemoveDateTime(task.id)
+                  : () => handleRemoveDateTime(task.id, panelData.id)
               }
             />
           )}

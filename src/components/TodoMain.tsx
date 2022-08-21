@@ -1,14 +1,7 @@
 import { TaskType, BoardType, PanelType } from "../utils/types";
-import { getLocalStorage, setLocalStorage } from "../utils/useLocalStorage";
-import React, { ChangeEventHandler, useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import autoAnimate from "@formkit/auto-animate";
-import {
-  DragDropContext,
-  DropResult,
-  DragStart,
-  DraggableProvidedDragHandleProps,
-  DraggableProvided,
-} from "react-beautiful-dnd";
+import { DraggableProvided, DraggableStateSnapshot } from "react-beautiful-dnd";
 import { TodoPanelDivider } from "./TodoPanelDivider";
 import { TodoList } from "./TodoList";
 import { Save, MoreHoriz } from "@mui/icons-material";
@@ -21,18 +14,23 @@ import {
   InputAdornment,
   IconButton,
   Tooltip,
-  Button,
 } from "@mui/material";
 
 interface TodoListProps {
   provided: DraggableProvided;
+  snapshot: DraggableStateSnapshot;
   panelData: PanelType;
   boardData: BoardType;
   setBoardData: React.Dispatch<React.SetStateAction<BoardType>>;
-  activeList: string[];
-  completedList: string[];
   newPanel: string;
   setNewPanel: React.Dispatch<React.SetStateAction<string>>;
+  isItemCombineEnabled: boolean;
+  activeList: string[];
+  completedList: string[];
+  handleDeletePanel: (panelId: string) => void;
+  handleDeleteTask: (taskId: string, panelId: string) => void;
+  handleUnappendSubtask: (taskId: string, panelId: string) => void;
+  handleToggleTask: (taskId: string, panelId: string) => void;
 }
 
 const StyledTextField = styled(TextField)({
@@ -61,6 +59,7 @@ const StyledTextField = styled(TextField)({
 
 export const TodoMain: React.FC<TodoListProps> = ({
   provided,
+  snapshot,
   panelData,
   boardData,
   setBoardData,
@@ -68,6 +67,11 @@ export const TodoMain: React.FC<TodoListProps> = ({
   completedList,
   newPanel,
   setNewPanel,
+  isItemCombineEnabled,
+  handleDeletePanel,
+  handleDeleteTask,
+  handleUnappendSubtask,
+  handleToggleTask,
 }: TodoListProps) => {
   // Set up autoAnimation of ul element
   const parent = useRef<HTMLDivElement>(null);
@@ -78,18 +82,18 @@ export const TodoMain: React.FC<TodoListProps> = ({
   const [isEditPanelTitle, setIsEditPanelTitle] = useState(
     panelData.id === newPanel
   );
-
   const [panelTitle, setPanelTitle] = useState<string>(panelData.title);
-
-  const [isReveal, setIsReveal] = useState<boolean>(
-    getLocalStorage("isReveal", false)
-  );
+  const [isReveal, setIsReveal] = useState<boolean>(false);
+  const [isAnimateError, setIsAnimateError] = useState<boolean>(false);
 
   const handleSavePanelTitle = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!panelTitle.trim()) {
-      alert("Enter a title");
+      setIsAnimateError(true);
+      setTimeout(() => {
+        setIsAnimateError(false);
+      }, 1000);
       return;
     }
 
@@ -113,22 +117,7 @@ export const TodoMain: React.FC<TodoListProps> = ({
 
   const handleReveal: React.ChangeEventHandler<HTMLInputElement> = () => {
     setIsReveal(prevState => {
-      setLocalStorage("isReveal", !prevState);
       return !prevState;
-    });
-  };
-
-  const handleDeletePanel = (panelId: string) => {
-    setBoardData(prevState => {
-      // remove panel from board
-      const newPanels = { ...prevState.panels };
-      delete newPanels[panelId];
-
-      return {
-        ...prevState,
-        panels: newPanels,
-        panelOrder: prevState.panelOrder.filter(id => id !== panelId),
-      };
     });
   };
 
@@ -136,10 +125,15 @@ export const TodoMain: React.FC<TodoListProps> = ({
     <Paper
       sx={{
         backgroundColor: "rgba(220, 220, 220, 0.6)",
-        border: "1px solid rgba(175, 175, 175, 0.36)",
-        boxShadow: "0 4px 30px rgba(0, 0, 0, 0.1)",
+        border: snapshot.isDragging
+          ? "3px solid rgba(51, 65, 85, 1)"
+          : "1px solid rgba(175, 175, 175, 0.36)",
+        boxShadow: snapshot.isDragging
+          ? "3px 3px 0.5px #747e8c"
+          : "0 4px 30px rgba(0, 0, 0, 0.1)",
+        borderRadius: snapshot.isDragging ? "8px" : "4px",
       }}
-      className="flex flex-col"
+      className={`flex flex-col`}
       elevation={3}
     >
       {/* Panel header */}
@@ -148,7 +142,7 @@ export const TodoMain: React.FC<TodoListProps> = ({
         className="flex items-center justify-between pl-3 pr-2 pt-2 rounded-t"
       >
         {!isEditPanelTitle ? (
-          <Tooltip title="Double-click to edit" placement="right-start">
+          <Tooltip title="Double-click to edit" placement="top-start">
             <Typography
               className="cursor-custom-cursor"
               variant="body2"
@@ -160,7 +154,12 @@ export const TodoMain: React.FC<TodoListProps> = ({
             </Typography>
           </Tooltip>
         ) : (
-          <form className="w-full" onSubmit={handleSavePanelTitle}>
+          <form
+            className={`w-full animate__animated ${
+              isAnimateError ? "animate__headShake" : ""
+            }`}
+            onSubmit={handleSavePanelTitle}
+          >
             <StyledTextField
               autoFocus
               variant="standard"
@@ -196,14 +195,19 @@ export const TodoMain: React.FC<TodoListProps> = ({
       <div ref={parent} className="flex flex-col">
         {/* Render un-completed tasks */}
 
+        {/* Render active tasks */}
         <TodoList
+          type="active"
           boardData={boardData}
           panelData={panelData}
           todoList={activeList}
-          droppableId={"active"}
+          handleDeleteTask={handleDeleteTask}
+          isItemCombineEnabled={isItemCombineEnabled}
+          handleUnappendSubtask={handleUnappendSubtask}
+          handleToggleTask={handleToggleTask}
         />
 
-        {/* Active - completed divider */}
+        {/* Divider */}
         <TodoPanelDivider
           activeCount={activeList.length}
           completedCount={completedList.length}
@@ -214,10 +218,14 @@ export const TodoMain: React.FC<TodoListProps> = ({
         {/* Render completed tasks */}
         {isReveal && (
           <TodoList
+            type="completed"
             boardData={boardData}
             panelData={panelData}
             todoList={completedList}
-            droppableId={"completed"}
+            isItemCombineEnabled={false}
+            handleDeleteTask={handleDeleteTask}
+            handleUnappendSubtask={handleUnappendSubtask}
+            handleToggleTask={handleToggleTask}
           />
         )}
       </div>

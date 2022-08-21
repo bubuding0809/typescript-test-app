@@ -6,18 +6,20 @@ import MoreVertIcon from "@mui/icons-material/MoreVert";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import ClearIcon from "@mui/icons-material/Clear";
 import SubdirectoryArrowLeftIcon from "@mui/icons-material/SubdirectoryArrowLeft";
-import { TaskType, Todo } from "../utils/types";
+import { BoardType, PanelType, TaskType, Todo } from "../utils/types";
 
 interface TodoTaskMenuProps {
   task: TaskType;
-  listOrigin: string;
+  panelData: PanelType;
+  boardData: BoardType;
   handleDelete: any;
   handleUnappend: any;
 }
 
 export const TodoTaskMenu: React.FC<TodoTaskMenuProps> = ({
   task,
-  listOrigin,
+  panelData,
+  boardData,
   handleDelete,
   handleUnappend,
 }: TodoTaskMenuProps) => {
@@ -41,11 +43,7 @@ export const TodoTaskMenu: React.FC<TodoTaskMenuProps> = ({
           aria-expanded={open ? "true" : undefined}
           onClick={handleClick}
         >
-          <MoreVertIcon
-            sx={{
-              fontSize: "20px",
-            }}
-          />
+          <MoreVertIcon fontSize="medium" />
         </IconButton>
       </Tooltip>
       <Menu
@@ -63,27 +61,37 @@ export const TodoTaskMenu: React.FC<TodoTaskMenuProps> = ({
           horizontal: "left",
         }}
       >
-        {(task.isTopLevel || listOrigin === "active") && (
+        {(!task.parent || !boardData.todoTasks[task.parent].isCompleted) && (
           <Tooltip
             title="Delete task permanently"
             placement="right-start"
             TransitionComponent={Fade}
             TransitionProps={{ timeout: 1000 }}
           >
-            <MenuItem onClick={() => handleDelete(task.id)}>
+            <MenuItem
+              onClick={() => {
+                handleDelete(task.id, panelData.id);
+                handleClose();
+              }}
+            >
               <DeleteForeverIcon sx={{ fontSize: "20px", marginRight: 1 }} />
               <Typography variant="body2">Delete</Typography>
             </MenuItem>
           </Tooltip>
         )}
-        {!task.isTopLevel && listOrigin === "active" && (
+        {task.parent && !task.isCompleted && (
           <Tooltip
             title="Move out of sub tasks"
             placement="right-start"
             TransitionComponent={Fade}
             TransitionProps={{ timeout: 1000 }}
           >
-            <MenuItem onClick={() => handleUnappend(task.id)}>
+            <MenuItem
+              onClick={() => {
+                handleUnappend(task.id, panelData.id);
+                handleClose();
+              }}
+            >
               <SubdirectoryArrowLeftIcon
                 sx={{ fontSize: "20px", marginRight: 1 }}
               />

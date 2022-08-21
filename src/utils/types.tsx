@@ -19,13 +19,13 @@ export type Entry = {
 
 export type TaskType = {
   id: string;
+  parent: string | null;
   title: string;
   date: string;
   time: string;
   description: string;
   subtasks: string[];
   isCompleted: boolean;
-  isTopLevel: boolean;
 };
 
 export type TasksType = {
