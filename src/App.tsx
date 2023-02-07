@@ -25,7 +25,9 @@ function App() {
           TaskMate
         </Typography>
       </header>
+
       <BoardView />
+
       <footer
         className="
         flex flex-col justify-center items-center

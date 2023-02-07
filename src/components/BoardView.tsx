@@ -420,9 +420,7 @@ const BoardView = () => {
               : "";
             return (
               <div
-                className={`
-                  h-full
-                  `}
+                className="h-full"
                 ref={provided.innerRef}
                 {...provided.droppableProps}
               >
@@ -471,6 +469,8 @@ const BoardView = () => {
           }}
         </Droppable>
       </DragDropContext>
+
+      {/* Create new panel button */}
       <Button
         sx={{
           backgroundColor: "rgba(220, 220, 220, 0.6)",
